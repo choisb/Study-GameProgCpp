@@ -122,6 +122,9 @@ void Game::UpdateGame()
     while (!SDL_TICKS_PASSED(SDL_GetTicks(), mTicksCount + 16))
         ;
 
+    // 다음 프레임을 위해 현재 시간값 저장.
+    mTicksCount = SDL_GetTicks();
+
     // 델타 시간은 현재 프레임 틱값과 이전 프레임 틱값의 차다.
     // (차를 초 단위로 변환)
     float deltaTime = (SDL_GetTicks() - mTicksCount) / 1000.0f;
@@ -208,8 +211,7 @@ void Game::UpdateGame()
     {
         mBallVel.x *= -1.0f;
     }
-    // 다음 프레임을 위해 틱값을 계산
-    mTicksCount = SDL_GetTicks();
+
 
 }
 void Game::GenerateOutput()
