@@ -50,5 +50,8 @@ private:
     // 델타 타임 구하기 위한 변수
     Uint32 mTicksCount;
 
+    // 플레이어 ship
+    class Ship* mShip;
+
 
 };
