@@ -9,7 +9,7 @@ public:
     // 델타 시간으로 이 컴포넌트를 업데이트
     virtual void Update(float deltaTime);
     int GetUpdateOrder() const { return mUpdateOrder; }
-private:
+protected:
     // 소유자 액터, 컴포넌트가 필요할 때 액터가 가진 다양한 데이터 및 정보에 접근하기 위해 필요.
     class Actor* mOwner;
     // 컴포넌트의 업데이트 순서

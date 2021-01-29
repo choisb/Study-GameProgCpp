@@ -12,8 +12,13 @@ public:
     void RunLoop();     // 게임이 끝나기 전까지 게임 루프 실행
     void Shutdown();    // 게임 종료
 
-    void AddActor(class Actor* actor);    // 엑터를 추가
-    void RemoveActor(class Actor* actor); // 엑터를 삭제
+    // 엑터 추가/삭제
+    void AddActor(class Actor* actor);   
+    void RemoveActor(class Actor* actor);
+
+    // sprite 추가/삭제
+    void AddSprite(class SpriteComponent* sprite);  
+    void RemoveSprite(class SpriteComponent* sprite);
 
     SDL_Texture* GetTexture(const std::string& fileName);
 
@@ -32,6 +37,9 @@ private:
     std::vector<class Actor*> mActors;
     // 대기 중인 액터, mActors를 반복하는 동안 새 액터를 생성하는 경우를 위해서 대기 액터를 위한 벡터 사용.
     std::vector<class Actor*> mPendingActors;
+
+    //sprite를 저장하기 위한 벡터
+    std::vector<class SpriteComponent*> mSprites;
 
     SDL_Window* mWindow;    // SDL이 생성한 window
     bool mIsRunning;        // 게임이 계속 실행돼야 하는지를 판단.

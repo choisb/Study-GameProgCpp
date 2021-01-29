@@ -2,6 +2,7 @@
 #include "SDL/SDL_image.h"
 #include <algorithm>
 #include "Actor.h"
+#include "SpriteComponent.h"
 
 Game::Game()
     : mWindow(nullptr)
@@ -56,6 +57,7 @@ bool Game::Initialize()
     }
 
     mTicksCount = SDL_GetTicks();
+    LoadData();
 
     return true;
 }
@@ -160,20 +162,20 @@ void Game::GenerateOutput()
     // 현재 그리기 색상으로 후면 버퍼 지우기
     SDL_RenderClear(mRenderer);
 
-    // 게임 장면을 그리는 코드가 들어갈 곳
-    //mRenderer를 (255,255,255,255) 흰색으로 지정
-    SDL_SetRenderDrawColor(
-        mRenderer,
-        0,      // R
-        255,    // G
-        0,      // B
-        255     // A
-    );
+    for (auto sprite : mSprites)
+    {      
+        sprite->Draw(mRenderer);
+    }
 
     /////////////////////////////////
 
     // 전면 버퍼와 후면 버퍼 교환
     SDL_RenderPresent(mRenderer);
+}
+
+void Game::LoadData()
+{
+
 }
 
 void Game::UnloadData()
@@ -252,12 +254,42 @@ void Game::RemoveActor(Actor* actor)
         std::iter_swap(iter, mActors.end()-1);
         mActors.pop_back();
     }
-
     // mPendingActors vector에 존재할 경우 삭제
     iter = find(mPendingActors.begin(), mPendingActors.end(), actor);
     if (iter != mPendingActors.end()) {
         std::iter_swap(iter, mPendingActors.end()-1);
         mPendingActors.pop_back();
     }
+}
 
+void Game::AddSprite(SpriteComponent* sprite)
+{
+    // 정렬된 벡터에서 사입해야 할 위치를 찾는다.
+    // (자신보다 그리기 순서값이 큰 최초 요소)
+    int myDrawOrder = sprite->GetDrawOrder();
+    auto iter = mSprites.begin();
+    for (; iter != mSprites.end(); ++iter)
+    {
+        if (myDrawOrder < (*iter)->GetDrawOrder())
+        {
+            break;
+        }
+    }
+    // 반복자 위치 앞에 요소를 삽입한다.
+    mSprites.insert(iter, sprite);
+}
+
+void Game::RemoveSprite(SpriteComponent* sprite)
+{
+    auto iter = std::find(mSprites.begin(), mSprites.end(), sprite);
+    mSprites.erase(iter);
+
+    // mDrawOrder 순으로 정렬되어 있기 때문에
+    // swap(), pop()을 통해서 삭제 할 수 없다.
+
+    //if (iter != mSprites.end())
+    //{
+    //    std::iter_swap(iter, mSprites.end() - 1);
+    //    mSprites.pop_back();
+    //}
 }
