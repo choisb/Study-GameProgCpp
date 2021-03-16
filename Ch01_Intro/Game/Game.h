@@ -1,48 +1,55 @@
+// ----------------------------------------------------------------
+// From Game Programming in C++ by Sanjay Madhav
+// Copyright (C) 2017 Sanjay Madhav. All rights reserved.
+// 
+// Released under the BSD License
+// See LICENSE in root directory for full details.
+// ----------------------------------------------------------------
+
 #pragma once
 #include "SDL/SDL.h"
 
+// Vector2 struct just stores x/y coordinates
+// (for now)
+struct Vector2
+{
+	float x;
+	float y;
+};
 
+// Game class
 class Game
 {
 public:
-    Game();
-    bool Initialize();  // 게임 초기화
-    void RunLoop();     // 게임이 끝나기 전까지 게임 루프 실행
-    void Shutdown();    // 게임 종료
-
+	Game();
+	// Initialize the game
+	bool Initialize();
+	// Runs the game loop until the game is over
+	void RunLoop();
+	// Shutdown the game
+	void Shutdown();
 private:
-    // 게임 루프를 위한 헬퍼 함수
-    void ProcessInput();
-    void UpdateGame();
-    void GenerateOutput();
+	// Helper functions for the game loop
+	void ProcessInput();
+	void UpdateGame();
+	void GenerateOutput();
 
-    SDL_Window* mWindow;    // SDL이 생성한 window
-    bool mIsRunning;        // 게임이 계속 실행돼야 하는지를 판단.
+	// Window created by SDL
+	SDL_Window* mWindow;
+	// Renderer for 2D drawing
+	SDL_Renderer* mRenderer;
+	// Number of ticks since start of game
+	Uint32 mTicksCount;
+	// Game should continue to run
+	bool mIsRunning;
 
-    SDL_Renderer* mRenderer;
-
-    const int thickness = 15;
-    const int paddleH = 100;
-
-
-    struct Vector2
-    {
-        float x;
-        float y;
-    };
-
-    // 델타 타임 구하기 위한 변수
-    Uint32 mTicksCount;
-
-    // 공과 패들의 이동
-    int mPaddle1_Dir;
-    int mPaddle2_Dir;
-    Vector2 mBallVel;
-
-    // 공과 패들의 위치
-    Vector2 mPaddle1_Pos;
-    Vector2 mPaddle2_Pos;
-
-    Vector2 mBallPos;
-
+	// Pong specific
+	// Direction of paddle
+	int mPaddleDir;
+	// Position of paddle
+	Vector2 mPaddlePos;
+	// Position of ball
+	Vector2 mBallPos;
+	// Velocity of ball
+	Vector2 mBallVel;
 };
