@@ -27,7 +27,7 @@ bool Game::Initialize()
     }
 
     mWindow = SDL_CreateWindow(
-        "Game Programming in C++ (Chapter 2)", // 윈도우 제목
+        "Game Programming in C++ (Chapter 3)", // 윈도우 제목
         100,    // 윈도우의 좌측 상단 x좌표
         100,    // 윈도우의 좌측 상단 y좌표
         1024,   // 윈도우의 너비
@@ -93,13 +93,19 @@ void Game::ProcessInput()
     }
 
     // 키보드 상태 얻기
-    const Uint8* state = SDL_GetKeyboardState(NULL);
+    const Uint8* keyState = SDL_GetKeyboardState(NULL);
     // 이스케이프 키를 눌렀다면 루프 종료
-    if (state[SDL_SCANCODE_ESCAPE])
+    if (keyState[SDL_SCANCODE_ESCAPE])
     {
         mIsRunning = false;
     }
 
+	mUpdatingActors = true;
+	for (auto actor : mActors)
+	{
+		actor->ProcessInput(keyState);
+	}
+	mUpdatingActors = false;
 }
 
 void Game::UpdateGame()
@@ -178,6 +184,11 @@ void Game::GenerateOutput()
 }
 void Game::LoadData()
 {
+	// Create player's ship
+	mShip = new Ship(this);
+	mShip->SetPosition(Vector2(512.0f, 384.0f));
+	mShip->SetRotation(Math::PiOver2);
+
 	const int numAsteroids = 20;
 	for (int i = 0; i < numAsteroids; i++)
 	{
