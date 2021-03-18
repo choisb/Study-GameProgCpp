@@ -6,8 +6,6 @@
 #include "Laser.h"
 #include "CircleComponent.h"
 #include "Asteroid.h"
-#include <iostream>
-using namespace std;
 
 Ship::Ship(Game* game)
     : Actor(game)
@@ -34,12 +32,12 @@ void Ship::UpdateActor(float deltaTime)
 	mRespawnTime -= deltaTime;
 	mInvincibleTime -= deltaTime;
 
-	cout << "리스폰: " << mRespawnTime << " | 무적: " << mInvincibleTime << endl;
 	if (mRespawnTime >= 0)
 		return;
 
 	SetState(EActive);
 
+	// 부활후 무적시간이 남아있을 경우 운석 교차 검사 안함
 	if (mInvincibleTime >= 0)
 		return;
 

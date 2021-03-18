@@ -8,6 +8,7 @@ MoveComponent::MoveComponent(Actor* owner, int updateOrder)
 }
 void MoveComponent::Update(float deltaTime)
 {
+	// Actor의 상태가 paused라면 Actor 업데이트 안함.
 	if (mOwner->GetState() == Actor::EPaused)
 		return;
 

@@ -11,7 +11,9 @@ public:
 private:
 	float mLaserCooldown;
 	class CircleComponent* mCircle;
+	// 리스폰 시간
 	float mRespawnTime;
+	// 부활후 무적 시간.
 	float mInvincibleTime;
 
 };
