@@ -9,7 +9,7 @@ Ship::Ship(Game* game)
     : Actor(game)
 {
 	SpriteComponent* sc = new SpriteComponent(this, 150);
-	sc->SetTexture(game->GetTexture("../Assets/Ship.png"));
+	sc->SetTexture(game->GetTexture("../Assets/ShipWithThrust.png"));
 
 	// Create InputComponent and set keys/speed
 	InputComponent* ic = new InputComponent(this);

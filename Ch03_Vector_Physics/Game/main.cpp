@@ -1,4 +1,7 @@
 #include "Game.h"
+#include "Math.h"
+#include <iostream>
+using namespace std;
 
 int main(int argc, char** argv)
 {
@@ -9,5 +12,6 @@ int main(int argc, char** argv)
         game.RunLoop();
     }
     game.Shutdown();
+
     return 0;
 }

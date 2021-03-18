@@ -14,6 +14,10 @@ Actor::Actor(Game* game)
 Actor::~Actor()
 {
     mGame->RemoveActor(this);
+	while (!mComponents.empty())
+	{
+		delete mComponents.back();
+	}
 }
 // Game이 호출하는 코드
 void Actor::Update(float deltaTime)
