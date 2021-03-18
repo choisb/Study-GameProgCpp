@@ -3,6 +3,7 @@
 #include "MoveComponent.h"
 #include "Game.h"
 #include "Random.h"
+#include "CircleComponent.h"
 
 Asteroid::Asteroid(Game * game)
 	:Actor(game)
@@ -19,6 +20,9 @@ Asteroid::Asteroid(Game * game)
 	// 이동 컴포넌트를 생성하고 전방 속도를 설정한다.
 	MoveComponent* mc = new MoveComponent(this);
 	mc->SetForwardSpeed(150.0f);
+
+	mCircle = new CircleComponent(this);
+	mCircle->SetRadius(40.0f);
 
 	GetGame()->AddAsteroid(this);
 }
