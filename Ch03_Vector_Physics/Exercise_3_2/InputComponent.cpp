@@ -1,4 +1,5 @@
 #include "InputComponent.h"
+#include "Actor.h"
 
 InputComponent::InputComponent(class Actor* owner)
 	:MoveComponent(owner)
@@ -7,6 +8,9 @@ InputComponent::InputComponent(class Actor* owner)
 
 void InputComponent::ProcessInput(const uint8_t* keyState)
 {
+	if (mOwner->GetState() == Actor::EPaused)
+		return;
+
 	// MoveComponent를 위한 전방 속도 계산
 	float forwardSpeed = 0.0f;
 	if (keyState[mForwardKey])

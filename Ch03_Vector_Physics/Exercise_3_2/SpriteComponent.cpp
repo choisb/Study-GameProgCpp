@@ -24,6 +24,9 @@ void SpriteComponent::SetTexture(SDL_Texture* texture)
 }
 void SpriteComponent::Draw(SDL_Renderer* renderer)
 {
+	if (mOwner->GetState() != Actor::EActive)
+		return;
+
     if (mTexture)
     {
         SDL_Rect r;

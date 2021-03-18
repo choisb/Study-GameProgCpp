@@ -8,6 +8,9 @@ MoveComponent::MoveComponent(Actor* owner, int updateOrder)
 }
 void MoveComponent::Update(float deltaTime)
 {
+	if (mOwner->GetState() == Actor::EPaused)
+		return;
+
 	if(!Math::NearZero(mAngularSpeed))
 	{
 		float rot = mOwner->GetRotation();
