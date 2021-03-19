@@ -3,37 +3,33 @@
 
 MoveComponent::MoveComponent(Actor* owner, int updateOrder)
 	:Component(owner, updateOrder)
+	, mMass(1.0f)
+	, mForces(Vector2(0.0f, 0.0f))
+	, mAccele(Vector2(0.0f, 0.0f))
+	, mVelocity(Vector2(0.0f, 0.0f))
+	, GA(Vector2(0.1f, 9.8f))
+	, mAirResistance(0.08f)
 {
 
 }
 void MoveComponent::Update(float deltaTime)
 {
-	// Actor의 상태가 paused라면 Actor 업데이트 안함.
-	if (mOwner->GetState() == Actor::EPaused)
-		return;
+	// 매 프레임마다 중력 작용
+	AddForce(GA * mMass);
+	// 매 프레임마다 공기저항력 작용
+	AddForce(mVelocity * mAirResistance * (-1.0f));
+	mAccele = mForces * (1/mMass);
+	mVelocity += mAccele;
+	// 속도벡터로 actor의 회전값 계산.
+	float rot = Math::PiOver2 - Math::Atan2(mVelocity.x, -mVelocity.y);
+	mOwner->SetRotation(rot);
 
-	if(!Math::NearZero(mAngularSpeed))
-	{
-		float rot = mOwner->GetRotation();
-		rot += mAngularSpeed * deltaTime;
-		mOwner->SetRotation(rot);
-	}
+	
+	Vector2 pos = mOwner->GetPosition();
+	//SDL의 y좌표계는 아래쪽 방향이 양의방향이기 때문에 y값은 빼준다
+	pos.x += mVelocity.x * deltaTime;
+	pos.y += mVelocity.y * deltaTime;
+	mOwner->SetPosition(pos);
 
-	if (!Math::NearZero(mForwardSpeed))
-	{
-		Vector2 pos = mOwner->GetPosition();
-		pos += mOwner->GetForward() * mForwardSpeed * deltaTime;
-
-		// Screen wrapping code only for asteroids
-		if (pos.x < 0.0f)
-			pos.x = 1022.0f;
-		else if (pos.x > 1024.0f)
-			pos.x = 2.0f;
-
-		if (pos.y < 0.0f)
-			pos.y = 766.0f;
-		else if (pos.y > 768.0f)
-			pos.y = 2.0f;
-		mOwner->SetPosition(pos);
-	}
+	mForces = Vector2(0.0f, 0.0f);
 }

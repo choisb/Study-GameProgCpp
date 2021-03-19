@@ -1,6 +1,9 @@
 #pragma once
 #include "Math.h"
 #include <vector>   
+#include <iostream>
+using namespace std;
+
 class Actor
 {
 public:
@@ -29,7 +32,9 @@ public:
     float GetScale() const { return mScale; }
     void SetScale(float scale) { mScale = scale; }
     float GetRotation() const { return mRotation; }
-    void SetRotation(float rotation) { mRotation = rotation; }
+    void SetRotation(float rotation) { 
+		cout << "SetRotation: " << Math::ToDegrees(rotation) << endl;
+		mRotation = rotation; }
 
     State GetState() const { return mState; }
     void SetState(State state) { mState = state; }

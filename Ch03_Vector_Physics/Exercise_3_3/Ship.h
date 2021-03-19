@@ -9,11 +9,5 @@ public:
 	void ActorInput(const uint8_t* keyState) override;
 
 private:
-	float mLaserCooldown;
-	class CircleComponent* mCircle;
-	// 리스폰 시간
-	float mRespawnTime;
-	// 부활후 무적 시간.
-	float mInvincibleTime;
 
 };

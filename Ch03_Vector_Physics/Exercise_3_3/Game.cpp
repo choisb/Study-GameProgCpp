@@ -4,8 +4,7 @@
 #include "Actor.h"
 #include "SpriteComponent.h"
 #include "Ship.h"
-#include "BGSpriteComponent.h"
-#include "Asteroid.h"
+
 
 Game::Game()
     : mWindow(nullptr)
@@ -186,14 +185,7 @@ void Game::LoadData()
 {
 	// Create player's ship
 	mShip = new Ship(this);
-	mShip->SetPosition(Vector2(512.0f, 384.0f));
-	mShip->SetRotation(Math::PiOver2);
-
-	const int numAsteroids = 20;
-	for (int i = 0; i < numAsteroids; i++)
-	{
-		new Asteroid(this);
-	}
+	mShip->SetPosition(Vector2(10.0f, 384.0f));
 
 }
 void Game::UnloadData()

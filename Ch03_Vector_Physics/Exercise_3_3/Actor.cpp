@@ -2,6 +2,7 @@
 #include "Component.h"
 #include "Game.h"
 
+
 Actor::Actor(Game* game)
     :mState(EActive)
     ,mPosition(Vector2::Zero)
@@ -22,6 +23,8 @@ Actor::~Actor()
 // Game이 호출하는 코드
 void Actor::Update(float deltaTime)
 {
+	cout << "state: " << mState << endl;
+	cout << "rotation: " << mRotation << endl;
     UpdateComponents(deltaTime);
     UpdateActor(deltaTime);
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "Component.h"
+#include "Math.h"
 
 class MoveComponent : public Component
 {
@@ -9,16 +10,27 @@ public:
 
 	void Update(float deltaTime) override;
 
-	float GetAngularSpeed() const { return mAngularSpeed; }
-	float GetForwardSpeed() const { return mForwardSpeed; }
-	void SetAngularSpeed(float speed) { mAngularSpeed = speed; }
-	void SetForwardSpeed(float speed) { mForwardSpeed = speed; }
+	// 물리연산을 위한 멤버함수
+	void AddForce(Vector2 force) { mForces += force; }
+
+	float GetMass() const { return mMass; }
+	Vector2 GetForces() const { return mForces; }
+	Vector2 GetVelocity() const { return mVelocity; }
+	float GetairResistance() const { return mAirResistance; }
+
+	void SetMass(float mass) { mMass = mass; }
+	void SetForces(Vector2 forces) { mForces = forces; }
+	void SetVelocity(Vector2 velocity) { mVelocity = velocity; }
+
 
 private:
-	// 회전을 제어(초당 라디안)
-	float mAngularSpeed;
-	// 전방 이동을 제어(초당 단위)
-	float mForwardSpeed;
+	float mMass;
+	Vector2 mForces;
+	Vector2 mAccele;
+	Vector2 mVelocity;
 
-
+	// 중력 가속도(gravitational acceleration)
+	const Vector2 GA;
+	// 공기 저항
+	const float mAirResistance;
 };
