@@ -24,7 +24,8 @@ void SpriteComponent::SetTexture(SDL_Texture* texture)
 }
 void SpriteComponent::Draw(SDL_Renderer* renderer)
 {
-	if (mOwner->GetState() != Actor::EActive)
+    // Actor의 상태가 EActive가 아니 라면 Actor를 그리지 않음.
+    if (mOwner->GetState() != Actor::EActive)
 		return;
 
     if (mTexture)

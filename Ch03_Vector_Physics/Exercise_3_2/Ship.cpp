@@ -22,6 +22,7 @@ Ship::Ship(Game* game)
 	ic->SetMaxForwardSpeed(300.0f);
 	ic->SetMaxAngularSpeed(Math::TwoPi);
 
+    // 충돌 검사를 위해서 CircleComponent 추가와 반지름 설정
 	mCircle = new CircleComponent(this);
 	mCircle->SetRadius(30.0f);
 }
@@ -32,6 +33,7 @@ void Ship::UpdateActor(float deltaTime)
 	mRespawnTime -= deltaTime;
 	mInvincibleTime -= deltaTime;
 
+    // 리스폰 시간이 남아있을 경우 Active 상태가 될 수 없다.
 	if (mRespawnTime >= 0)
 		return;
 
@@ -50,6 +52,7 @@ void Ship::UpdateActor(float deltaTime)
 			// 우주선은 paused 상태로 설정
 			SetState(EPaused);
 			SetPosition(Vector2(512.0f, 386.0f));
+            SetRotation(0.0f);
 			mRespawnTime = 1.5f;
 			mInvincibleTime = 3.0f;
 			break;

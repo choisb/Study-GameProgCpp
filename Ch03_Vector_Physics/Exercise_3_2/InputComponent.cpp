@@ -8,9 +8,8 @@ InputComponent::InputComponent(class Actor* owner)
 
 void InputComponent::ProcessInput(const uint8_t* keyState)
 {
-	// Actor의 상태가 paused라면 Actor 입력 안받음
-
-	if (mOwner->GetState() == Actor::EPaused)
+    // Actor의 상태가 EActive가 아니 라면 입력을 받지 않음.
+    if (mOwner->GetState() == Actor::EPaused)
 		return;
 
 	// MoveComponent를 위한 전방 속도 계산
