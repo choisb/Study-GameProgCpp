@@ -19,9 +19,9 @@ Ship::Ship(Game* game)
 
 	// Create InputComponent and set keys/force
 	InputComponent* ic = new InputComponent(this);
-	ic->SetFireKey(SDL_SCANCODE_SPACE);
-	ic->SetFireForce(Vector2(15.0f,-200.0f));
-	ic->SetMass(10.0f);
+	ic->SetForceKey(SDL_SCANCODE_SPACE);
+	ic->SetDForce(Vector2(1500.0f,-20000.0f));
+	ic->SetMass(30.0f);
 }
 
 void Ship::UpdateActor(float deltaTime)

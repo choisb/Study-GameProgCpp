@@ -8,19 +8,18 @@ public:
 	InputComponent(class Actor* owner);
 	void ProcessInput(const uint8_t* keyState) override;
 	
-	// Getters/setters for private variables
-	Vector2 GetFireForce() const { return mFireForce; }
-	int GetFireKey() const { return mFireKey; }
+	// Getters/setters for private variables운동량
+	Vector2 GetDForcee() const { return mDForce; }
+	int GetFireKey() const { return mForceKey; }
 	
-	void SetFireForce(Vector2 force) { mFireForce = force; }
-	void SetFireKey(int key) { mFireKey = key; }
+	void SetDForce(Vector2 force) { mDForce = force; }
+	void SetForceKey(int key) { mForceKey = key; }
 
 private:
-	// 발사할때 전달할 힘
-	Vector2 mFireForce;
-	// 발사를 위한 키
-	int mFireKey;
-	bool isFired;
+	// 추진력(Driving Forc)
+	Vector2 mDForce;
+	// 추진력을 입력하는 키
+	int mForceKey;
 
 
 };
