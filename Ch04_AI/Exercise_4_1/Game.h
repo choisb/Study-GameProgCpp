@@ -31,6 +31,8 @@ public:
 	
 	class Grid* GetGrid() { return mGrid; }
 	std::vector<class Enemy*>& GetEnemies() { return mEnemies; }
+    std::vector<class Tower*>& GetTowers() { return mTowers; }
+
 	class Enemy* GetNearestEnemy(const Vector2& pos);
 private:
 	void ProcessInput();
@@ -59,6 +61,7 @@ private:
 
 	// Game-specific
 	std::vector<class Enemy*> mEnemies;
+    std::vector<class Tower*> mTowers;
 	class Grid* mGrid;
 	float mNextEnemy;
 };

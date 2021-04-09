@@ -23,6 +23,10 @@ public:
 	virtual void ProcessInput(const uint8_t* keyState) {}
 
 	int GetUpdateOrder() const { return mUpdateOrder; }
+
+    // Actor 인스턴스 mOwner 반환
+    class Actor* GetActor() { return mOwner; }
+
 protected:
 	// Owning actor
 	class Actor* mOwner;
