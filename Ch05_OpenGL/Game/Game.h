@@ -35,6 +35,7 @@ private:
     void CreateSpriteVerts();   // 스프라이트를 그리기 위한 버텍스 생성
     void LoadData();
     void UnloadData();
+    bool LoadShader();
 
     // 텍스처 load를 위한 Map
     std::unordered_map<std::string, SDL_Texture*> mTextures;
@@ -57,7 +58,8 @@ private:
     SDL_GLContext mContext; // context는 OpenGL에서 하나의 세계를 뜻한다. (한 프로그램에 복수개의 context도 가능하다.)
     // Sprite vertex array
     class VertexArray* mSpriteVerts;
-
+    // Sprite를 그리기 위한 셰이더
+    class Shader* mSpriteShader;
 
     // 델타 타임 구하기 위한 변수
     Uint32 mTicksCount;

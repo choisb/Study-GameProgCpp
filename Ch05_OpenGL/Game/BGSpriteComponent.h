@@ -11,7 +11,7 @@ public:
 
     // 부모로부터 오버라이딩한 Update/draw 함수
     void Update(float deltaTime) override;
-    void Draw(SDL_Renderer* renderer) override;
+    void Draw(class Shader* shader) override;
 
     // 배경에 사용되는 텍스처 설정
     // SDL_Texture 벡터를 인자로 받아서 해당 벡터에 있는 텍스처들의 offset값을

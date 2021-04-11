@@ -8,6 +8,7 @@
 #include "BGSpriteComponent.h"
 #include "Asteroid.h"
 #include "VertexArray.h"
+#include "Shader.h"
 
 Game::Game()
     : mWindow(nullptr)
@@ -89,14 +90,18 @@ bool Game::Initialize()
         return false;
     }
 
-
     if (IMG_Init(IMG_INIT_PNG) == 0)
     {
         SDL_Log("Unable to initialize SDL_image: %s", SDL_GetError());
         return false;
     }
 
-    // 스프라이트를 그리기 위한 사각형 생성
+    // 셰이더들을 로드한다.
+    if (!LoadShader())
+    {
+        SDL_Log("Failed to load shaders.");
+        return false;
+    }    // 스프라이트를 그리기 위한 사각형 생성
     CreateSpriteVerts();
 
     LoadData();
@@ -205,33 +210,19 @@ void Game::GenerateOutput()
     // 색상 버퍼 초기화
     glClear(GL_COLOR_BUFFER_BIT);
 
+    // Sprite::Draw() 함수에서 glDrawElements()가 실행된다.
+    // 이 glDrawElements() 함수를 사용하기 위해서는 
+    // "매프레임마다" 활성화된 버텍스 배열 개체와, 셰이더가 반드시 있어야 한다.
+    // 그래서 Draw()함수를 호출하기 전에 각각을 활성화 한다.
+    mSpriteShader->SetActive();
     mSpriteVerts->SetActive();
-    // 장면을 그린다.
+    for (auto sprite : mSprites)
+    {
+        sprite->Draw(mSpriteShader);
+    }
 
     // 버퍼를 스왑해서 장면을 출력한다.
     SDL_GL_SwapWindow(mWindow);
-
-    ////mRenderer를 (0,0,255,255) 파랑색으로 지정
-    //SDL_SetRenderDrawColor(
-    //    mRenderer,
-    //    210,    // R
-    //    210,    // G
-    //    210,    // B
-    //    255     // A
-    //);
-
-    //// 현재 그리기 색상으로 후면 버퍼 지우기
-    //SDL_RenderClear(mRenderer);
-
-    //for (auto sprite : mSprites)
-    //{
-    //    sprite->Draw(mRenderer);
-    //}
-
-    ///////////////////////////////////
-
-    //// 전면 버퍼와 후면 버퍼 교환
-    //SDL_RenderPresent(mRenderer);
 }
 void Game::CreateSpriteVerts()
 {
@@ -274,6 +265,16 @@ void Game::UnloadData()
         delete mActors.back();
     }
 }
+bool Game::LoadShader()
+{
+    mSpriteShader = new Shader();
+    if (!mSpriteShader->Load("Shaders/Basic.vert", "Shaders/basic.frag"))
+    {
+        return false;
+    }
+    mSpriteShader->SetActive();
+    return true;
+}
 
 SDL_Texture* Game::GetTexture(const std::string& fileName)
 {
@@ -315,6 +316,8 @@ void Game::Shutdown()
 {
     delete mSpriteVerts;
     // OpenGL 콘텍스트 제거
+    mSpriteShader->Unload();
+    delete mSpriteShader;
     SDL_GL_DeleteContext(mContext);
     // mWindow 객체 해제.
     SDL_DestroyWindow(mWindow);

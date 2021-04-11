@@ -8,8 +8,8 @@ public:
     // (그리기 순서값이 낮을 수록 더 뒤쪽에 그린다.)
     SpriteComponent(class Actor* owner, int drawOrder = 100);
     ~SpriteComponent();
-    virtual void Draw(SDL_Renderer* renderer);
-    virtual void SetTexture(SDL_Texture* texture);
+    virtual void Draw(class Shader* renderer);
+    virtual void SetTexture(SDL_Texture* shader);
 
     int GetDrawOrder() const { return mDrawOrder; }
     int GetTexHeight() const { return mTexHeight; }
