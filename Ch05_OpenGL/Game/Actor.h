@@ -25,11 +25,14 @@ public:
 
     // Getters/setters
     const Vector2& GetPosition() const { return mPosition; }
-    void SetPosition(const Vector2& pos) { mPosition = pos; }
+    void SetPosition(const Vector2& pos) { mPosition = pos; mRecomputeWorldTransform = true; }
     float GetScale() const { return mScale; }
-    void SetScale(float scale) { mScale = scale; }
+    void SetScale(float scale) { mScale = scale; mRecomputeWorldTransform = true; }
     float GetRotation() const { return mRotation; }
-    void SetRotation(float rotation) { mRotation = rotation; }
+    void SetRotation(float rotation) { mRotation = rotation; mRecomputeWorldTransform = true; }
+
+    void ComputeWorldTransform();
+    const Matrix4& GetWorldTransform() const { return mWorldTransform; }
 
     State GetState() const { return mState; }
     void SetState(State state) { mState = state; }
@@ -48,10 +51,13 @@ public:
 private:
     // 액터의 상태
     State mState;
+
     // 변환
+    Matrix4 mWorldTransform;
     Vector2 mPosition;  // 액터의 중심점
     float mScale;       // 액터의 배율 (100%의 경우 1.0f)
     float mRotation;    // 회전 각도 (라디안)
+    bool mRecomputeWorldTransform;
 
     // 이 액터가 보유한 컴포넌트들
     std::vector<class Component*> mComponents;

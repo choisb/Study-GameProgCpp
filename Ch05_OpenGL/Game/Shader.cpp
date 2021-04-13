@@ -2,7 +2,17 @@
 #include "SDL/SDL.h"
 #include <fstream>
 #include <sstream>
+Shader::Shader()
+    :mVertexShader(0)
+    , mFragShader(0)
+    , mShaderProgram(0)
+{
 
+}
+Shader::~Shader()
+{
+
+}
 bool Shader::Load(const std::string& vertName, const std::string& fragName)
 {
     // 버텍스와 프래그먼트 셰이더 컴파일
@@ -30,6 +40,19 @@ void Shader::SetActive()
     // 셰이더 프로그램을 활성화 시킨다.
     glUseProgram(mShaderProgram);
 }
+void Shader::SetMatrixUniform(const char* name, const Matrix4& matrix)
+{
+    // 해당 이름의 uniform을 찾는다.
+    GLuint loc = glGetUniformLocation(mShaderProgram, name);
+    // 행렬 데이터를 uniform에 전송한다.
+    glUniformMatrix4fv(
+        loc,        // uniform ID
+        1,          // 행렬의 수 (이번 경우는 오직 하나)
+        GL_TRUE,    // 행 벡터를 사용하면 TRUE로 설정
+        matrix.GetAsFloatPtr() // 행렬 데이터에 대한 포인터
+    );
+}
+
 // 셰이더 프로그램과 버텍스 셰이더, 그리고 프래그먼트 셰이더를 삭제한다.
 void Shader::Unload()
 {

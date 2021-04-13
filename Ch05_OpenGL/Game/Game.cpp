@@ -5,7 +5,6 @@
 #include "Actor.h"
 #include "SpriteComponent.h"
 #include "Ship.h"
-#include "BGSpriteComponent.h"
 #include "Asteroid.h"
 #include "VertexArray.h"
 #include "Shader.h"
@@ -182,6 +181,8 @@ void Game::UpdateGame()
     // 대기 중인 액터를 mActors로 이동
     for (auto pending : mPendingActors)
     {
+        // 생성된 직후 올바른 세계 변환을 가지기 위해서 변환을 계산한다.
+        pending->ComputeWorldTransform();
         mActors.emplace_back(pending);
     }
     mPendingActors.clear();
@@ -247,7 +248,7 @@ void Game::LoadData()
 {
 	// Create player's ship
 	mShip = new Ship(this);
-	mShip->SetPosition(Vector2(512.0f, 384.0f));
+	//mShip->SetPosition(Vector2(512.0f, 384.0f));
 	mShip->SetRotation(Math::PiOver2);
 
 	const int numAsteroids = 20;
@@ -268,11 +269,15 @@ void Game::UnloadData()
 bool Game::LoadShader()
 {
     mSpriteShader = new Shader();
-    if (!mSpriteShader->Load("Shaders/Basic.vert", "Shaders/basic.frag"))
+    if (!mSpriteShader->Load("Shaders/Transform.vert", "Shaders/basic.frag"))
     {
         return false;
     }
     mSpriteShader->SetActive();
+    // 화면 너비가 1024x768인 view proj 변환행렬
+    Matrix4 viewProj = Matrix4::CreateSimpleViewProj(1024.f, 768.f);
+    mSpriteShader->SetMatrixUniform("uViewProj", viewProj);
+
     return true;
 }
 

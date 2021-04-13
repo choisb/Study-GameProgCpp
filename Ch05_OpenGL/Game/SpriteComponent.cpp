@@ -25,6 +25,17 @@ void SpriteComponent::SetTexture(SDL_Texture* texture)
 }
 void SpriteComponent::Draw(Shader* shader)
 {
+    // 텍스처의 너비와 높이로 사각형을 스케일
+    Matrix4 scaleMat = Matrix4::CreateScale(
+        static_cast<float>(mTexWidth),
+        static_cast<float>(mTexHeight),
+        1.0f);
+
+    Matrix4 world = scaleMat * mOwner->GetWorldTransform();
+    // 세계 변환 행렬을 설정
+    shader->SetMatrixUniform("uWorldTransform", world);
+
+    // 사각형을 그린다.
     // glDrawElements 호출을 위해서는 활성화된 버텍스 배열 개체와 활성화된 셰이더가 필요하다.
     // 매 프레임에서 SpriteComponents를 그리기 전에 스프라이트 버텍스 배열개체와 셰이더 모두를 활성화 해야한다.
     glDrawElements(

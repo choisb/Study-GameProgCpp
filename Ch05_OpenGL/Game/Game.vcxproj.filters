@@ -51,13 +51,7 @@
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AnimSpriteComponent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Asteroid.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BGSpriteComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Laser.cpp">
@@ -101,13 +95,7 @@
     <ClInclude Include="Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AnimSpriteComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Asteroid.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BGSpriteComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Laser.h">
@@ -120,5 +108,6 @@
   <ItemGroup>
     <None Include="Shaders\Basic.vert" />
     <None Include="Shaders\Basic.frag" />
+    <None Include="Shaders\Transform.vert" />
   </ItemGroup>
 </Project>

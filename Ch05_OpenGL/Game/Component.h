@@ -12,6 +12,7 @@ public:
     int GetUpdateOrder() const { return mUpdateOrder; }
 
 	virtual void ProcessInput(const uint8_t* keyState) {}
+    virtual void OnUpdateWorldTransform() {}
 
 protected:
     // 소유자 액터, 컴포넌트가 필요할 때 액터가 가진 다양한 데이터 및 정보에 접근하기 위해 필요.
