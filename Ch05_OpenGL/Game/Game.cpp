@@ -217,6 +217,14 @@ void Game::GenerateOutput()
     // 그래서 Draw()함수를 호출하기 전에 각각을 활성화 한다.
     mSpriteShader->SetActive();
     mSpriteVerts->SetActive();
+
+    // 알파블렌딩을 활성화
+    glEnable(GL_BLEND);
+    glBlendFunc(
+        GL_SRC_ALPHA,           // srcFactor = srcAlpha
+        GL_ONE_MINUS_SRC_ALPHA  // dstFactor = 1 - srcAlpha
+    );
+
     for (auto sprite : mSprites)
     {
         sprite->Draw(mSpriteShader);
@@ -227,12 +235,12 @@ void Game::GenerateOutput()
 }
 void Game::CreateSpriteVerts()
 {
-
     float vertices[] = {
-        -0.5f,  0.5f, 0.f,  // top left
-         0.5f,  0.5f, 0.f,  // top right
-         0.5f, -0.5f, 0.f,  // bottom right
-        -0.5f, -0.5f, 0.f   // bottom left
+        //  x,     y,    z,    u,    v  // 버텍스 위치(x,y,z) 텍스처 맵핑(u,v)
+        -0.5f,  0.5f,  0.f,  0.f,  0.f, // top left
+         0.5f,  0.5f,  0.f,  1.f,  0.f, // top right
+         0.5f, -0.5f,  0.f,  1.f,  1.f, // bottom right
+        -0.5f, -0.5f,  0.f,  0.f,  1.f  // bottom left
     };
 
     unsigned int indices[] = {
@@ -269,7 +277,7 @@ void Game::UnloadData()
 bool Game::LoadShader()
 {
     mSpriteShader = new Shader();
-    if (!mSpriteShader->Load("Shaders/Transform.vert", "Shaders/basic.frag"))
+    if (!mSpriteShader->Load("Shaders/Sprite.vert", "Shaders/Sprite.frag"))
     {
         return false;
     }
@@ -281,10 +289,10 @@ bool Game::LoadShader()
     return true;
 }
 
-SDL_Texture* Game::GetTexture(const std::string& fileName)
+Texture* Game::GetTexture(const std::string& fileName)
 {
     // 반환할 texture의 주소값을 담을 변수
-    SDL_Texture* tex = nullptr;
+    Texture* tex = nullptr;
 
     // unordered_map 컨테이너에 저장되어 있는 mTextures에서 fileName으로 검색
     auto iter = mTextures.find(fileName);
@@ -295,24 +303,18 @@ SDL_Texture* Game::GetTexture(const std::string& fileName)
     }
     else
     {
+        tex = new Texture();
+
         // 파일로부터 로딩
-        SDL_Surface* surf = IMG_Load(fileName.c_str());
-        if (!surf)
+        if (tex->Load(fileName))
         {
-            SDL_Log("Failed to load texture file %s", fileName.c_str());
-            return nullptr;
+            mTextures.emplace(fileName.c_str(), tex);
         }
-
-        // 텍스처 생성
-        tex = SDL_CreateTextureFromSurface(mRenderer, surf);
-        SDL_FreeSurface(surf);
-        if (!tex)
+        else
         {
-            SDL_Log("Failed to convert surface to texture for %s", fileName.c_str());
-            return nullptr;
+            delete tex;
+            tex = nullptr;
         }
-
-        mTextures.emplace(fileName.c_str(), tex);
     }
     return tex;
 }

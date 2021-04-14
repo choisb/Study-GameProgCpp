@@ -23,7 +23,7 @@ VertexArray::VertexArray(const float* verts, unsigned int numVerts,
     // GL_ARRAY_BUFFER는 가장 최근에 생성한 버텍스 버퍼를 사용하겠다는 것을 뜻한다.
     glBufferData(
         GL_ARRAY_BUFFER,                // 데이터를 쓸 버퍼의 버퍼 타입
-        numVerts * 3 * sizeof(float),   // 복사할 바이트 크기 (정점 수 * 3(x,y,z) * 4)
+        numVerts * 5 * sizeof(float),   // 복사할 바이트 크기 (정점 수 * 5(x,y,z,u,v) * 4)
         verts,                          // 복사할 소스(포인터)
         GL_STATIC_DRAW                  // 이 데이터를 어떻게 사용할 것인가?
         );  //STATIC_DRAW: 데이터를 오직 한 번만 로드하며 버텍스가 자주 그려지는 경우에 사용되는 옵션
@@ -52,9 +52,21 @@ VertexArray::VertexArray(const float* verts, unsigned int numVerts,
         3,                  // 요소의 수 (이번 예에서는 3 - x, y, z)
         GL_FLOAT,           // 요소의 타입
         GL_FALSE,           // (정수형 타입에서만 사용된다.)
-        sizeof(float) * 3,  // 간격. 한 버텍스의 시작점 ~ 다음 버텍스의 시작점 까지의 거리. 패딩값을 주지 않는다면 버텍스 사이즈를 간격으로 설정하면 된다.
+        sizeof(float) * 5,  // 간격. 한 버텍스의 시작점 ~ 다음 버텍스의 시작점 까지의 거리. 패딩값을 주지 않는다면 버텍스 사이즈를 간격으로 설정하면 된다.
         0                   // 버텍스의 시작에서 이 속성까지의 오프셋
     );
+
+    // 두 번째 버텍스 속성(속성1)을 활성화
+    // 속성1: 버텍스는 2차원 텍스처좌표(u, v)를 가진다.
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(
+        1,          // 버텍스 속성 인덱스
+        2,          // 요소의 수 u와 v 2개의 컴포넌트 존재
+        GL_FLOAT,   // 요소의 타입
+        GL_FALSE,   // GL_FLOAT에서는 사용되지 않음
+        sizeof(float) * 5,  // 간격(간격은 항상 버텍스의 크기다.)
+        reinterpret_cast<void*> (sizeof(float) * 3) // 오프셋 포인터
+        );
 }
 
 VertexArray::~VertexArray()

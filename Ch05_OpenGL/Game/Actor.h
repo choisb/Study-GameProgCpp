@@ -36,8 +36,8 @@ public:
 
     State GetState() const { return mState; }
     void SetState(State state) { mState = state; }
-	//SDL은 아래쪽 방향이 +y방향이기 때문에 y값에 (-)를 곱해야함.
-	Vector2 GetForward() const { return Vector2(Math::Cos(mRotation), -Math::Sin(mRotation)); }
+
+    Vector2 GetForward() const { return Vector2(Math::Cos(mRotation), Math::Sin(mRotation)); }
 
     class Game* GetGame() { return mGame; }
 

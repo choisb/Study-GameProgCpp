@@ -1,5 +1,6 @@
 #pragma once
 #include "SDL/SDL.h"
+#include "Texture.h"
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -20,7 +21,7 @@ public:
     void AddSprite(class SpriteComponent* sprite);  
     void RemoveSprite(class SpriteComponent* sprite);
 
-    SDL_Texture* GetTexture(const std::string& fileName);
+    Texture* GetTexture(const std::string& fileName);
 
 	// Game-specific (add/remove asteroid)
 	void AddAsteroid(class Asteroid* ast);
@@ -38,7 +39,7 @@ private:
     bool LoadShader();
 
     // 텍스처 load를 위한 Map
-    std::unordered_map<std::string, SDL_Texture*> mTextures;
+    std::unordered_map<std::string, Texture*> mTextures;
 
     // 활성화된 액터
     std::vector<class Actor*> mActors;

@@ -2,6 +2,7 @@
 #include "Actor.h"
 #include "Game.h"
 #include "Shader.h"
+#include "Texture.h"
 
 SpriteComponent::SpriteComponent(Actor* owner, int drawOrder)
     : Component(owner)
@@ -17,11 +18,11 @@ SpriteComponent::~SpriteComponent()
     mOwner->GetGame()->RemoveSprite(this);
 }
 
-void SpriteComponent::SetTexture(SDL_Texture* texture)
+void SpriteComponent::SetTexture(Texture* texture)
 {
     mTexture = texture;
-    // 텍스처의 너비와 높이를 알기 위해서 SDL_QuertTexture() 함수 사용
-    SDL_QueryTexture(texture, nullptr, nullptr, &mTexWidth, &mTexHeight);
+    mTexHeight = texture->GetHeight();
+    mTexWidth = texture->GetWidth();
 }
 void SpriteComponent::Draw(Shader* shader)
 {
@@ -34,7 +35,8 @@ void SpriteComponent::Draw(Shader* shader)
     Matrix4 world = scaleMat * mOwner->GetWorldTransform();
     // 세계 변환 행렬을 설정
     shader->SetMatrixUniform("uWorldTransform", world);
-
+    // 현재 텍스처를 설정
+    mTexture->SetActive();
     // 사각형을 그린다.
     // glDrawElements 호출을 위해서는 활성화된 버텍스 배열 개체와 활성화된 셰이더가 필요하다.
     // 매 프레임에서 SpriteComponents를 그리기 전에 스프라이트 버텍스 배열개체와 셰이더 모두를 활성화 해야한다.

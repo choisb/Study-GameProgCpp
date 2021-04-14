@@ -143,6 +143,7 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Ship.cpp" />
     <ClCompile Include="SpriteComponent.cpp" />
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="VertexArray.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -159,11 +160,14 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Ship.h" />
     <ClInclude Include="SpriteComponent.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="VertexArray.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Basic.frag" />
     <None Include="Shaders\Basic.vert" />
+    <None Include="Shaders\Sprite.frag" />
+    <None Include="Shaders\Sprite.vert" />
     <None Include="Shaders\Transform.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

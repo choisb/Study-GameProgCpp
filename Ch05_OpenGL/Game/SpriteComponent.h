@@ -9,7 +9,7 @@ public:
     SpriteComponent(class Actor* owner, int drawOrder = 100);
     ~SpriteComponent();
     virtual void Draw(class Shader* renderer);
-    virtual void SetTexture(SDL_Texture* shader);
+    virtual void SetTexture(class Texture* shader);
 
     int GetDrawOrder() const { return mDrawOrder; }
     int GetTexHeight() const { return mTexHeight; }
@@ -17,7 +17,7 @@ public:
 
 protected:
     // 그릴 텍스처
-    SDL_Texture* mTexture;
+    class Texture* mTexture;
     // 화가 알고리즘에서 사용하는 그리기 순서
     int mDrawOrder;
     // 텍스처의 너비 / 높이
