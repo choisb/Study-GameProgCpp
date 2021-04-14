@@ -236,11 +236,12 @@ void Game::GenerateOutput()
 void Game::CreateSpriteVerts()
 {
     float vertices[] = {
-        //  x,     y,    z,    u,    v  // 버텍스 위치(x,y,z) 텍스처 맵핑(u,v)
-        -0.5f,  0.5f,  0.f,  0.f,  0.f, // top left
-         0.5f,  0.5f,  0.f,  1.f,  0.f, // top right
-         0.5f, -0.5f,  0.f,  1.f,  1.f, // bottom right
-        -0.5f, -0.5f,  0.f,  0.f,  1.f  // bottom left
+        // 버텍스 위치(x,y,z) 텍스처 맵핑(u,v) 버텍스 색상(r,g,b,)
+        //  x,     y,    z,   u,   v,    r,    g,    b 
+        -0.5f,  0.5f,  0.f, 0.f, 0.f, 0.1f, 0.1f, 0.8f, // top left
+         0.5f,  0.5f,  0.f, 1.f, 0.f, 0.1f, 0.1f, 0.8f, // top right
+         0.5f, -0.5f,  0.f, 1.f, 1.f, 0.1f, 0.1f, 0.8f, // bottom right
+        -0.5f, -0.5f,  0.f, 0.f, 1.f, 0.1f, 0.1f, 0.8f, // bottom left
     };
 
     unsigned int indices[] = {
