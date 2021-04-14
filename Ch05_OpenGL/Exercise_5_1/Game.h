@@ -37,6 +37,7 @@ private:
     void LoadData();
     void UnloadData();
     bool LoadShader();
+    void UpdateBG(float deltaTime);
 
     // 텍스처 load를 위한 Map
     std::unordered_map<std::string, Texture*> mTextures;
@@ -69,4 +70,19 @@ private:
 	class Ship* mShip; // Player's ship
 	std::vector<class Asteroid*> mAsteroids;
 
+    typedef struct _RGBColor {
+        float R;
+        float G;
+        float B;
+    }RGBColor;
+
+    // 배경색
+    RGBColor mBGColor = { 0.2f, 0.2f, 0.2f };
+
+    enum BGColorState
+    {
+        toBlue, toGreen, toBlack
+    };
+    // 색상 변화 상태
+    BGColorState mBGColorState = toBlue;
 };

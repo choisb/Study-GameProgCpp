@@ -170,6 +170,9 @@ void Game::UpdateGame()
     // 다음 프레임을 위해 현재 시간값 저장.
     mTicksCount = SDL_GetTicks();
 
+    //Game의 UpdateBG 함수 호출
+    UpdateBG(deltaTime);
+
     // 모든 액터를 갱신
     mUpdatingActors = true;
     for (auto actor : mActors)
@@ -203,11 +206,45 @@ void Game::UpdateGame()
         delete actor;
     }
 }
+void Game::UpdateBG(float deltaTime)
+{
+    // 색상의 변화율
+    float transitionRate = deltaTime / 4;
+
+    // toBlue 상태라면
+    if (mBGColorState == toBlue) {
+        mBGColor.B += (transitionRate);
+
+        // 파랑색이 됐다면 toGreen 상태 변경
+        if (mBGColor.B > 0.85f)
+            mBGColorState = toGreen;
+    }
+    // toGreen 상태라면
+    else if(mBGColorState == toGreen)
+    {
+        mBGColor.B -= (transitionRate);
+        mBGColor.G += (transitionRate);
+
+        // 초록색이 됐다면 toBlack 상태로 변경
+        if (mBGColor.G > 0.85f)
+            mBGColorState = toBlack;
+    }
+    // toBlack 상태라면
+    else
+    {
+        mBGColor.G -= (transitionRate);
+        // 검정색이 됐다면 색상 초기화 후 toBlue 상태로 변경
+        if (mBGColor.G < 0.2f) {
+            mBGColor = { 0.2f, 0.2f, 0.2f };
+            mBGColorState = toBlue;
+        }
+    }
+}
 
 void Game::GenerateOutput()
 {
     // 색상을 회색으로 설정
-    glClearColor(0.86f, 0.86f, 0.86f, 1.0f);
+    glClearColor(mBGColor.R, mBGColor.G, mBGColor.B, 1.0f);
     // 색상 버퍼 초기화
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -232,6 +269,7 @@ void Game::GenerateOutput()
 
     // 버퍼를 스왑해서 장면을 출력한다.
     SDL_GL_SwapWindow(mWindow);
+
 }
 void Game::CreateSpriteVerts()
 {
