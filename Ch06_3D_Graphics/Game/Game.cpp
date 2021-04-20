@@ -1,19 +1,13 @@
 #include "Game.h"
-#include "SDL/SDL_image.h"
-#include <GL/glew.h>
+#include "Renderer.h"
 #include <algorithm>
 #include "Actor.h"
 #include "SpriteComponent.h"
-#include "Ship.h"
-#include "Asteroid.h"
-#include "VertexArray.h"
-#include "Shader.h"
 
 Game::Game()
-    : mWindow(nullptr)
-    , mRenderer(nullptr)
-    , mIsRunning(true)
-    , mUpdatingActors(false)
+    :mRenderer(nullptr)
+    ,mIsRunning(true)
+    ,mUpdatingActors(false)
 {
 }
 
@@ -27,86 +21,19 @@ bool Game::Initialize()
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
         return false;
     }
-    // OpenGL 윈도우 속성 설정 (반드시 윈도우 생성 전에 사용할 것)
-    // 함수 호출이 성공하면 0을 반환하고 실패하면 음수를 반환한다.
-    // 코어 OpenGL 프로파일 사용
-    // 코어(데스크탑용) 외에도 호환성, ES(모바일용) 프로파일이 있다.
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,    // profile 속성을 지정한다.
-                        SDL_GL_CONTEXT_PROFILE_CORE);   // core profile을 사용한다.
-      
-    // 3.3 버전으로 지정
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);   // 메이저 버전을 3으로 설정
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);   // 마이너 버전을 3으로 설정
 
-    // RGBA 채널마다 8비트 크기인 색상 버퍼 요청
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);   
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8); 
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);  
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); 
-
-    // 더블 버퍼링 활성화
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);   
-    // OpenGL이 하드웨어 가속을 사용하도록 강제 (OpenGL 렌더링이 GPU 에서 수행되도록 함)   
-    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-
-
-    mWindow = SDL_CreateWindow(
-        "Game Programming in C++ (Chapter 5)", // 윈도우 제목
-        100,    // 윈도우의 좌측 상단 x좌표
-        100,    // 윈도우의 좌측 상단 y좌표
-        1024,   // 윈도우의 너비
-        768,    // 윈도우의 높이
-        SDL_WINDOW_OPENGL       // 플래그 (0은 어떠한 플래그도 설정되지 않음을 의미)
-    );
-
-    mContext = SDL_GL_CreateContext(mWindow);
-
-    // GLEW 초기화 ( GL/glew.h 헤더 include 해야함)
-    glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK)
+    // Renderer 생성 및 초기화
+    mRenderer = new Renderer(this);
+    if (!mRenderer->Initialize(1024.0f, 768.0f))
     {
-        SDL_Log("Failed to initialize GLEW.");
+        SDL_Log("Failed to initialize renderer");
+        delete mRenderer;
+        mRenderer = nullptr;
         return false;
     }
-    // 일부 플랫폼에서 GLEW은 에러 코드를 내보낸다.
-    // 그러므로 에러값을 제거하자
-    glGetError();
-
-    if (!mWindow)
-    {
-        SDL_Log("Failed to create window: %s", SDL_GetError());
-        return false;
-    }
-
-    mRenderer = SDL_CreateRenderer(
-        mWindow,    // 렌더링을 위해 생성한 윈도우
-        -1,         // 사용할 그래픽카드 선택. -1인 경우 SDL이 알아서 선택 
-        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC    // 플래그 값.가속화 렌더러 사용 여부와 수직 동기화의 활성화 여부 선택.
-    );
-    if (!mRenderer)
-    {
-        SDL_Log("Failed to create renderer: %s", SDL_GetError());
-        return false;
-    }
-
-    if (IMG_Init(IMG_INIT_PNG) == 0)
-    {
-        SDL_Log("Unable to initialize SDL_image: %s", SDL_GetError());
-        return false;
-    }
-
-    // 셰이더들을 로드한다.
-    if (!LoadShader())
-    {
-        SDL_Log("Failed to load shaders.");
-        return false;
-    }    // 스프라이트를 그리기 위한 사각형 생성
-    CreateSpriteVerts();
 
     LoadData();
-
     mTicksCount = SDL_GetTicks();
-
     return true;
 }
 
@@ -144,12 +71,10 @@ void Game::ProcessInput()
         mIsRunning = false;
     }
 
-	mUpdatingActors = true;
 	for (auto actor : mActors)
 	{
 		actor->ProcessInput(keyState);
 	}
-	mUpdatingActors = false;
 }
 
 void Game::UpdateGame()
@@ -206,66 +131,15 @@ void Game::UpdateGame()
 
 void Game::GenerateOutput()
 {
-    // 색상을 회색으로 설정
-    glClearColor(0.86f, 0.86f, 0.86f, 1.0f);
-    // 색상 버퍼 초기화
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // Sprite::Draw() 함수에서 glDrawElements()가 실행된다.
-    // 이 glDrawElements() 함수를 사용하기 위해서는 
-    // "매프레임마다" 활성화된 버텍스 배열 개체와, 셰이더가 반드시 있어야 한다.
-    // 그래서 Draw()함수를 호출하기 전에 각각을 활성화 한다.
-    mSpriteShader->SetActive();
-    mSpriteVerts->SetActive();
-
-    // 알파블렌딩을 활성화
-    glEnable(GL_BLEND);
-    glBlendFunc(
-        GL_SRC_ALPHA,           // srcFactor = srcAlpha
-        GL_ONE_MINUS_SRC_ALPHA  // dstFactor = 1 - srcAlpha
-    );
-
-    for (auto sprite : mSprites)
-    {
-        sprite->Draw(mSpriteShader);
-    }
-
-    // 버퍼를 스왑해서 장면을 출력한다.
-    SDL_GL_SwapWindow(mWindow);
+    mRenderer->Draw();
 }
-void Game::CreateSpriteVerts()
-{
-    float vertices[] = {
-        //  x,     y,    z,    u,    v  // 버텍스 위치(x,y,z) 텍스처 맵핑(u,v)
-        -0.5f,  0.5f,  0.f,  0.f,  0.f, // top left
-         0.5f,  0.5f,  0.f,  1.f,  0.f, // top right
-         0.5f, -0.5f,  0.f,  1.f,  1.f, // bottom right
-        -0.5f, -0.5f,  0.f,  0.f,  1.f  // bottom left
-    };
 
-    unsigned int indices[] = {
-        0, 1, 2,
-        2, 3, 0
-    };
-    // 스프라이트를 그리기 위한 4각형 스프라이트 VertexArray 생성과정
-    // 앞으로 모든 sprite들은 이 멤버변수를 사용한다.
-    mSpriteVerts = new VertexArray(vertices, 4, indices, 6);
-}
 
 void Game::LoadData()
 {
-	// Create player's ship
-	mShip = new Ship(this);
-	//mShip->SetPosition(Vector2(512.0f, 384.0f));
-	mShip->SetRotation(Math::PiOver2);
-
-	const int numAsteroids = 20;
-	for (int i = 0; i < numAsteroids; i++)
-	{
-		new Asteroid(this);
-	}
 
 }
+
 void Game::UnloadData()
 {
     // delete actors
@@ -273,62 +147,20 @@ void Game::UnloadData()
     {
         delete mActors.back();
     }
-}
-bool Game::LoadShader()
-{
-    mSpriteShader = new Shader();
-    if (!mSpriteShader->Load("Shaders/Sprite.vert", "Shaders/Sprite.frag"))
+    if (mRenderer)
     {
-        return false;
+        mRenderer->UnloadData();
     }
-    mSpriteShader->SetActive();
-    // 화면 너비가 1024x768인 view proj 변환행렬
-    Matrix4 viewProj = Matrix4::CreateSimpleViewProj(1024.f, 768.f);
-    mSpriteShader->SetMatrixUniform("uViewProj", viewProj);
-
-    return true;
 }
 
-Texture* Game::GetTexture(const std::string& fileName)
-{
-    // 반환할 texture의 주소값을 담을 변수
-    Texture* tex = nullptr;
-
-    // unordered_map 컨테이너에 저장되어 있는 mTextures에서 fileName으로 검색
-    auto iter = mTextures.find(fileName);
-    // fileName에 해당하는 texture가 존재한다면
-    if (iter != mTextures.end())
-    {
-        tex = iter->second;
-    }
-    else
-    {
-        tex = new Texture();
-
-        // 파일로부터 로딩
-        if (tex->Load(fileName))
-        {
-            mTextures.emplace(fileName.c_str(), tex);
-        }
-        else
-        {
-            delete tex;
-            tex = nullptr;
-        }
-    }
-    return tex;
-}
 
 void Game::Shutdown()
 {
-    delete mSpriteVerts;
-    // OpenGL 콘텍스트 제거
-    mSpriteShader->Unload();
-    delete mSpriteShader;
-    SDL_GL_DeleteContext(mContext);
-    // mWindow 객체 해제.
-    SDL_DestroyWindow(mWindow);
-    SDL_DestroyRenderer(mRenderer);
+    UnloadData();
+    if (mRenderer)
+    {
+        mRenderer->Shutdown();
+    }
     SDL_Quit();
 }
 
@@ -362,49 +194,6 @@ void Game::RemoveActor(Actor* actor)
     }
 }
 
-void Game::AddSprite(SpriteComponent* sprite)
-{
-    // 정렬된 벡터에서 사입해야 할 위치를 찾는다.
-    // (자신보다 그리기 순서값이 큰 최초 요소)
-    int myDrawOrder = sprite->GetDrawOrder();
-    auto iter = mSprites.begin();
-    for (; iter != mSprites.end(); ++iter)
-    {
-        if (myDrawOrder < (*iter)->GetDrawOrder())
-        {
-            break;
-        }
-    }
-    // 반복자 위치 앞에 요소를 삽입한다.
-    mSprites.insert(iter, sprite);
-}
 
-void Game::RemoveSprite(SpriteComponent* sprite)
-{
-    auto iter = std::find(mSprites.begin(), mSprites.end(), sprite);
-    mSprites.erase(iter);
 
-    // mDrawOrder 순으로 정렬되어 있기 때문에
-    // swap(), pop()을 통해서 삭제 할 수 없다.
 
-    //if (iter != mSprites.end())
-    //{
-    //    std::iter_swap(iter, mSprites.end() - 1);
-    //    mSprites.pop_back();
-    //}
-}
-
-void Game::AddAsteroid(Asteroid* ast)
-{
-	mAsteroids.emplace_back(ast);
-}
-
-void Game::RemoveAsteroid(Asteroid* ast)
-{
-	auto iter = std::find(mAsteroids.begin(),
-		mAsteroids.end(), ast);
-	if (iter != mAsteroids.end())
-	{
-		mAsteroids.erase(iter);
-	}
-}

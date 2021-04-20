@@ -4,9 +4,9 @@
 
 Actor::Actor(Game* game)
     :mState(EActive)
-    ,mPosition(Vector2::Zero)
+    ,mPosition(Vector3::Zero)
     ,mScale(1.0f)
-    ,mRotation(0.0f)
+    ,mRotation(Quaternion::Identity)
     ,mGame(game)
     ,mRecomputeWorldTransform(true)
 {
@@ -81,8 +81,8 @@ void Actor::ComputeWorldTransform()
         mRecomputeWorldTransform = false;
         // 스케일, 회전, 이동 행렬 순으로 결합해서 세계 변환 행렬 구함
         mWorldTransform = Matrix4::CreateScale(mScale);
-        mWorldTransform *= Matrix4::CreateRotationZ(mRotation);
-        mWorldTransform *= Matrix4::CreateTranslation(Vector3(mPosition.x, mPosition.y, 0.0f));
+        mWorldTransform *= Matrix4::CreateFromQuaternion(mRotation);
+        mWorldTransform *= Matrix4::CreateTranslation(mPosition);
         
         // 컴포넌트에 세계 변환이 갱신됐다고 통지
         for (auto comp : mComponents)

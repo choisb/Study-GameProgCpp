@@ -24,12 +24,12 @@ public:
     virtual void UpdateActor(float deltaTime);
 
     // Getters/setters
-    const Vector2& GetPosition() const { return mPosition; }
-    void SetPosition(const Vector2& pos) { mPosition = pos; mRecomputeWorldTransform = true; }
+    const Vector3& GetPosition() const { return mPosition; }
+    void SetPosition(const Vector3& pos) { mPosition = pos; mRecomputeWorldTransform = true; }
     float GetScale() const { return mScale; }
     void SetScale(float scale) { mScale = scale; mRecomputeWorldTransform = true; }
-    float GetRotation() const { return mRotation; }
-    void SetRotation(float rotation) { mRotation = rotation; mRecomputeWorldTransform = true; }
+    Quaternion GetRotation() const { return mRotation; }
+    void SetRotation(const Quaternion& rotation) { mRotation = rotation; mRecomputeWorldTransform = true; }
 
     void ComputeWorldTransform();
     const Matrix4& GetWorldTransform() const { return mWorldTransform; }
@@ -37,7 +37,7 @@ public:
     State GetState() const { return mState; }
     void SetState(State state) { mState = state; }
 
-    Vector2 GetForward() const { return Vector2(Math::Cos(mRotation), Math::Sin(mRotation)); }
+    Vector3 GetForward() const { return Vector3::Transform(Vector3::UnitX, mRotation); }
 
     class Game* GetGame() { return mGame; }
 
@@ -54,9 +54,9 @@ private:
 
     // 변환
     Matrix4 mWorldTransform;
-    Vector2 mPosition;  // 액터의 중심점
+    Vector3 mPosition;  // 액터의 중심점
     float mScale;       // 액터의 배율 (100%의 경우 1.0f)
-    float mRotation;    // 회전 각도 (라디안)
+    Quaternion mRotation;    // 회전 각도 (라디안)
     bool mRecomputeWorldTransform;
 
     // 이 액터가 보유한 컴포넌트들
