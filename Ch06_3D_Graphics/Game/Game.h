@@ -39,4 +39,6 @@ private:
     Uint32 mTicksCount;
     bool mIsRunning;        // 게임이 계속 실행돼야 하는지를 판단.
     bool mUpdatingActors;
+
+    class CameraActor* mCameraActor;
 };

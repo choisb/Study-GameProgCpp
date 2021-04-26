@@ -6,6 +6,8 @@
 #include "MeshComponent.h"
 #include "Mesh.h"
 #include "Texture.h"
+#include "CameraActor.h"
+#include "PlaneActor.h"
 
 Game::Game()
     :mRenderer(nullptr)
@@ -156,6 +158,43 @@ void Game::LoadData()
     mc = new MeshComponent(a);
     mc->SetMesh(mRenderer->GetMesh("../Assets/Sphere.gpmesh"));
 
+    // Setup floor
+    const float start = -1250.0f;
+    const float size = 250.0f;
+    for (int i = 0; i < 10; i++)
+    {
+	    for (int j = 0; j < 10; j++)
+	    {
+		    a = new PlaneActor(this);
+		    a->SetPosition(Vector3(start + i * size, start + j * size, -100.0f));
+	    }
+    }
+
+    // Left/right walls
+    q = Quaternion(Vector3::UnitX, Math::PiOver2);
+    for (int i = 0; i < 10; i++)
+    {
+	    a = new PlaneActor(this);
+	    a->SetPosition(Vector3(start + i * size, start - size, 0.0f));
+	    a->SetRotation(q);
+	
+	    a = new PlaneActor(this);
+	    a->SetPosition(Vector3(start + i * size, -start + size, 0.0f));
+	    a->SetRotation(q);
+    }
+
+    q = Quaternion::Concatenate(q, Quaternion(Vector3::UnitZ, Math::PiOver2));
+    // Forward/back walls
+    for (int i = 0; i < 10; i++)
+    {
+	    a = new PlaneActor(this);
+	    a->SetPosition(Vector3(start - size, start + i * size, 0.0f));
+	    a->SetRotation(q);
+
+	    a = new PlaneActor(this);
+	    a->SetPosition(Vector3(-start + size, start + i * size, 0.0f));
+	    a->SetRotation(q);
+    }
  
     // UI elements
     a = new Actor(this);
@@ -163,11 +202,15 @@ void Game::LoadData()
     SpriteComponent* sc = new SpriteComponent(a);
     sc->SetTexture(mRenderer->GetTexture("../Assets/HealthBar.png"));
 
-    //a = new Actor(this);
-    //a->SetPosition(Vector3(375.0f, -275.0f, 0.0f));
-    //a->SetScale(0.75f);
-    //sc = new SpriteComponent(a);
-    //sc->SetTexture(mRenderer->GetTexture("../Assets/Radar.png"));
+    a = new Actor(this);
+    a->SetPosition(Vector3(375.0f, -275.0f, 0.0f));
+    a->SetScale(0.75f);
+    sc = new SpriteComponent(a);
+    sc->SetTexture(mRenderer->GetTexture("../Assets/Radar.png"));
+
+    // Camera actor
+    mCameraActor = new CameraActor(this);
+
 
     // 게임에 존재하는 유일한 방향광을 설정한다. 
     // 실제 게임에서는 다양항 방향광이 존재할 수 있지만 현재 버전에서는 하나의 방향광만 지원한다.
