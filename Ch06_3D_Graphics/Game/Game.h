@@ -17,10 +17,6 @@ public:
     void AddActor(class Actor* actor);   
     void RemoveActor(class Actor* actor);
 
-    // sprite 추가/삭제
-    void AddSprite(class SpriteComponent* sprite);  
-    void RemoveSprite(class SpriteComponent* sprite);
-
     class Renderer* GetRenderer() { return mRenderer; }
 
 private:

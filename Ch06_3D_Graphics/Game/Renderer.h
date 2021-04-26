@@ -5,11 +5,15 @@
 #include <SDL/SDL.h>
 #include "Math.h"
 
-//struct DirectionalLight
-//{
-//    // Direction of light
-//
-//};
+struct DirectionalLight
+{
+    // 빛의 방향
+    Vector3 mDirection;
+    // 난반사 색상
+    Vector3 mDiffuseColor;
+    // 정반사 색상
+    Vector3 mSpecColor;
+};
 
 class Renderer
 {
@@ -34,9 +38,14 @@ public:
 
     void SetViewMatrix(const Matrix4& view) { mView = view; }
 
+    void SetAmbientLight(const Vector3& ambient) { mAmbientLight = ambient; }
+    DirectionalLight& GetDirectionalLight() { return mDirLight; }
+
+
 private:
     bool LoadShaders();
     void CreateSpriteVerts();
+    void SetLightUniforms(class Shader* shader);
 
     // Map of textures loaded
     std::unordered_map<std::string, class Texture*> mTextures;
@@ -66,6 +75,10 @@ private:
     // Widht/ height of screen
     float mScreenWidth;
     float mScreenHeight;
+
+    // 조명관련 변수
+    Vector3 mAmbientLight;
+    DirectionalLight mDirLight;
 
     // Window
     SDL_Window* mWindow;

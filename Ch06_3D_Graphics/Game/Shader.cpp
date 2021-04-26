@@ -53,6 +53,24 @@ void Shader::SetMatrixUniform(const char* name, const Matrix4& matrix)
     );
 }
 
+void Shader::SetVectorUniform(const char* name, const Vector3& vector)
+{
+    // 해당 이름의 uniform을 찾는다.
+    GLuint loc = glGetUniformLocation(mShaderProgram, name);
+    // 벡터 데이터를 uniform에 전송한다.
+    glUniform3fv(loc, 1, vector.GetAsFloatPtr());
+
+}
+
+void Shader::SetFloatUniform(const char* name, float value)
+{
+    // 해당 이름의 uniform을 찾는다.
+    GLuint loc = glGetUniformLocation(mShaderProgram, name);
+    // 벡터 데이터를 uniform에 전송한다.
+    glUniform1f(loc, value);
+
+}
+
 // 셰이더 프로그램과 버텍스 셰이더, 그리고 프래그먼트 셰이더를 삭제한다.
 void Shader::Unload()
 {

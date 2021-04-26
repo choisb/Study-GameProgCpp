@@ -6,6 +6,7 @@
 #include "VertexArray.h"
 #include "SpriteComponent.h"
 #include <GL/glew.h>
+#include "MeshComponent.h"
 
 Renderer::Renderer(Game* game)
     :mGame(game)
@@ -123,29 +124,45 @@ void Renderer::Draw()
     // 색상을 회색으로 설정
     glClearColor(0.86f, 0.86f, 0.86f, 1.0f);
     // 색상 버퍼 초기화
-    glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Sprite::Draw() 함수에서 glDrawElements()가 실행된다.
-    // 이 glDrawElements() 함수를 사용하기 위해서는 
-    // "매프레임마다" 활성화된 버텍스 배열 개체와, 셰이더가 반드시 있어야 한다.
-    // 그래서 Draw()함수를 호출하기 전에 각각을 활성화 한다.
-    mSpriteShader->SetActive();
-    mSpriteVerts->SetActive();
+	// Draw mesh components
+	// 3D mesh 컴포넌트를 그릴때는 DEPTH 버퍼를 활성화 / 블랜딩을 비활성
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+    
+	// mesh 셰이더 활성화
+	mMeshShader->SetActive();
+	// mesh 셰이더에 뷰-투영 행렬 적용
+	mMeshShader->SetMatrixUniform("uViewProj", mView * mProjection);
+    // 조명관련 셰이더 변수 설정
+    SetLightUniforms(mMeshShader);
 
-    // 알파블렌딩을 활성화
-    glEnable(GL_BLEND);
-    glBlendFunc(
-        GL_SRC_ALPHA,           // srcFactor = srcAlpha
-        GL_ONE_MINUS_SRC_ALPHA  // dstFactor = 1 - srcAlpha
-    );
+    // 모든 메시에 동일한 셰이더 적용 중.
+	for (auto mc : mMeshComps)
+	{
+		mc->Draw(mMeshShader);
+	}
 
-    for (auto sprite : mSprites)
-    {
-        sprite->Draw(mSpriteShader);
-    }
+	// 3D 메시 모두 그리고 UI등 2D 스프라이트 그리기 시작
+	// DEPTH 버퍼 비활성화
+	glDisable(GL_DEPTH_TEST);
+	// 알파값을 사용하기 위한 블렌딩 활성화
+	glEnable(GL_BLEND);
+	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 
-    // 버퍼를 스왑해서 장면을 출력한다.
-    SDL_GL_SwapWindow(mWindow);
+	// 스프라이트 셰이더와 스프라이트 버텍스 활성화
+	mSpriteShader->SetActive();
+	mSpriteVerts->SetActive();
+    // 모든 스프라이트를 그린다.
+	for (auto sprite : mSprites)
+	{
+		sprite->Draw(mSpriteShader);
+	}
+
+	// Swap the buffers
+	SDL_GL_SwapWindow(mWindow);
 }
 
 void Renderer::AddSprite(SpriteComponent* sprite)
@@ -178,6 +195,15 @@ void Renderer::RemoveSprite(SpriteComponent* sprite)
     //    std::iter_swap(iter, mSprites.end() - 1);
     //    mSprites.pop_back();
     //}
+}
+void Renderer::AddMeshComp(MeshComponent* mesh)
+{
+    mMeshComps.emplace_back(mesh);
+}
+void Renderer::RemoveMeshComp(MeshComponent* mesh)
+{
+    auto iter = std::find(mMeshComps.begin(), mMeshComps.end(), mesh);
+    mMeshComps.erase(iter);
 }
 
 Texture* Renderer::GetTexture(const std::string& fileName)
@@ -245,6 +271,28 @@ bool Renderer::LoadShaders()
     Matrix4 viewProj = Matrix4::CreateSimpleViewProj(mScreenWidth, mScreenHeight);
     mSpriteShader->SetMatrixUniform("uViewProj", viewProj);
 
+    mMeshShader = new Shader();
+    if (!mMeshShader->Load("Shaders/Phong.vert", "Shaders/Phong.frag"))
+    {
+        return false;
+    }
+    mMeshShader->SetActive();
+    // 3차원 뷰 변환 행렬, MeshShader에 적용
+    mView = Matrix4::CreateLookAt(
+        Vector3::Zero,  // 카메라 위치
+        Vector3::UnitX, // 타깃 위치
+        Vector3::UnitZ  // 상향 벡터
+    );
+    // 3차원 투영 행렬, MeshShader에 적용
+    mProjection = Matrix4::CreatePerspectiveFOV(
+        Math::ToRadians(70.0f), // 수평 FOV
+        mScreenWidth,           // 뷰의 너비
+        mScreenHeight,          // 뷰의 높이
+        25.0f,                  // 가까운 평면과의 거리
+        100000.0f               // 먼 평면과의 거리
+    );
+    mMeshShader->SetMatrixUniform("uViewProj", mView * mProjection);
+
     return true;
 }
 
@@ -265,4 +313,19 @@ void Renderer::CreateSpriteVerts()
     // 스프라이트를 그리기 위한 4각형 스프라이트 VertexArray 생성과정
     // 앞으로 모든 sprite들은 이 멤버변수를 사용한다.
     mSpriteVerts = new VertexArray(vertices, 4, indices, 6);
+}
+void Renderer::SetLightUniforms(Shader* shader)
+{
+    // 카메라 위치는 뷰 행렬의 역행렬로 얻을 수 있다.
+    Matrix4 invView = mView;
+    invView.Invert();
+    // 계산된 카메라 위치를 CameraPos에 입력
+    shader->SetVectorUniform("uCameraPos", invView.GetTranslation());
+    // 주변광
+    shader->SetVectorUniform("uAmbientLight", mAmbientLight);
+    // 방향광 (구조체 멤버를 참조하기 위해 . 표기법 사용)
+    shader->SetVectorUniform("uDirLight.mDirection", mDirLight.mDirection);
+    shader->SetVectorUniform("uDirLight.mDiffuseColor", mDirLight.mDiffuseColor);
+    shader->SetVectorUniform("uDirLight.mSpecColor", mDirLight.mSpecColor);
+
 }

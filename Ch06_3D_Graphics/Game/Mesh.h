@@ -19,6 +19,8 @@ public:
     const std::string& GetShaderName() const { return mShaderName; }
     // 오브젝트 공간 바운딩 구체 반지름을 얻는다.
     float GetRadius() const { return mRadius; }
+    // 정반사 지수 반환
+    float GetSpecPower() const { return mSpecPower; }
 
 private:
 
@@ -31,4 +33,6 @@ private:
     // 오브젝트 공간 바운딩 구체의 반지름값 저장. 충돌 검사에서 활용할 수 있다.
     // 원점에서 가장 멀리 떨어진 점까지의 거리ㄹ를 바운딩 구체의 반지름으로 사용.
     float mRadius;
+    // 정반사 지수
+    float mSpecPower;
 };
