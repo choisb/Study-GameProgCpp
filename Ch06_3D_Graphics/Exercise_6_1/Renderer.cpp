@@ -11,7 +11,6 @@
 Renderer::Renderer(Game* game)
     :mGame(game)
     ,mSpriteShader(nullptr)
-    ,mMeshShader(nullptr)
 {
 
 }
@@ -131,18 +130,35 @@ void Renderer::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
     
+    Shader* meshSader = GetShader("Phong");
 	// mesh 셰이더 활성화
-	mMeshShader->SetActive();
+    meshSader->SetActive();
 	// mesh 셰이더에 뷰-투영 행렬 적용
-	mMeshShader->SetMatrixUniform("uViewProj", mView * mProjection);
+    meshSader->SetMatrixUniform("uViewProj", mView * mProjection);
     // 조명관련 셰이더 변수 설정
-    SetLightUniforms(mMeshShader);
+    SetLightUniforms(meshSader);
 
     // 모든 메시에 동일한 셰이더 적용 중.
 	for (auto mc : mMeshComps)
 	{
-		mc->Draw(mMeshShader);
+       if(mc->GetMesh()->GetShaderName() == "Phong")
+		    mc->Draw(meshSader);
 	}
+
+    meshSader = GetShader("Basic");
+    // mesh 셰이더 활성화
+    meshSader->SetActive();
+    // mesh 셰이더에 뷰-투영 행렬 적용
+    meshSader->SetMatrixUniform("uViewProj", mView * mProjection);
+    // 조명관련 셰이더 변수 설정
+    SetLightUniforms(meshSader);
+
+    // 모든 메시에 동일한 셰이더 적용 중.
+    for (auto mc : mMeshComps)
+    {
+        if (mc->GetMesh()->GetShaderName() == "Basic")
+            mc->Draw(meshSader);
+    }
 
 	// 3D 메시 모두 그리고 UI등 2D 스프라이트 그리기 시작
 	// DEPTH 버퍼 비활성화
@@ -234,6 +250,33 @@ Texture* Renderer::GetTexture(const std::string& fileName)
         }
     }
     return tex;
+}
+Shader* Renderer::GetShader(const std::string& fileName)
+{
+    // 반환할 shader의 주소값을 담을 변수
+    Shader* newShader = nullptr;
+
+    auto iter = mMeshShaders.find(fileName);
+    // fileName에 해당하는 셰이더가 이미 존재한다면
+    if (iter != mMeshShaders.end())
+    {
+        newShader = iter->second;
+    }
+    else
+    {
+        newShader = new Shader();
+
+        if (newShader->Load(fileName))
+        {
+            mMeshShaders.emplace(fileName.c_str(), newShader);
+        }
+        else
+        {
+            delete newShader;
+            newShader = nullptr;
+        }
+    }
+    return newShader;
 }
 
 Mesh* Renderer::GetMesh(const std::string & fileName)

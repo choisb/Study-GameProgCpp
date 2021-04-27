@@ -35,6 +35,7 @@ public:
 
     class Texture* GetTexture(const std::string& fileName);
     class Mesh* GetMesh(const std::string& fileName);
+    class Shader* GetShader(const std::string& fileName);
 
     void SetViewMatrix(const Matrix4& view) { mView = view; }
 
@@ -58,6 +59,9 @@ private:
     // All mesh components drawn
     std::vector<class MeshComponent*> mMeshComps;
 
+    // 모든 셰이더들에 대한 table
+    std::unordered_map<std::string, class Shader*> mMeshShaders;
+
     // Game
     class Game* mGame;
 
@@ -66,8 +70,6 @@ private:
     // Sprite vertex array
     class VertexArray* mSpriteVerts;
 
-    // Mesh shader
-    class Shader* mMeshShader;
 
     // View/projection for 3D shaders
     Matrix4 mView;
