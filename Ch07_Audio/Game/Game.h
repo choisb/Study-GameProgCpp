@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "Math.h"
+#include "SoundEvent.h"
 
 class Game
 {
@@ -18,6 +19,7 @@ public:
     void RemoveActor(class Actor* actor);
 
     class Renderer* GetRenderer() { return mRenderer; }
+    class AudioSystem* GetAudioSystem() { return mAudioSystem; }
 
 private:
     // 게임 루프를 위한 헬퍼 함수
@@ -35,10 +37,12 @@ private:
 
     // 출력과 관련있는 기능들이 모여있는 Renderer
     class Renderer* mRenderer;
+    class AudioSystem* mAudioSystem;
 
     Uint32 mTicksCount;
     bool mIsRunning;        // 게임이 계속 실행돼야 하는지를 판단.
     bool mUpdatingActors;
 
     class CameraActor* mCameraActor;
+    SoundEvent mMusicEvent;
 };

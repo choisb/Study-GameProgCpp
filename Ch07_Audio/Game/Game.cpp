@@ -1,6 +1,5 @@
 #include "Game.h"
 #include "Renderer.h"
-#include <algorithm>
 #include "Actor.h"
 #include "SpriteComponent.h"
 #include "MeshComponent.h"
@@ -8,11 +7,16 @@
 #include "Texture.h"
 #include "CameraActor.h"
 #include "PlaneActor.h"
+#include "AudioSystem.h"
+#include "AudioComponent.h"
+#include <algorithm>
 
 Game::Game()
     :mRenderer(nullptr)
     ,mIsRunning(true)
     ,mUpdatingActors(false)
+    ,mCameraActor(nullptr)
+    ,mAudioSystem(nullptr)
 {
 }
 
@@ -34,6 +38,17 @@ bool Game::Initialize()
         SDL_Log("Failed to initialize renderer");
         delete mRenderer;
         mRenderer = nullptr;
+        return false;
+    }
+
+    // AudioSystem 생성
+    mAudioSystem = new AudioSystem(this);
+    if (!mAudioSystem->Initialize())
+    {
+        SDL_Log("Failed to initialize audio system");
+        mAudioSystem->Shutdown();
+        delete mAudioSystem;
+        mAudioSystem = nullptr;
         return false;
     }
 
@@ -132,6 +147,9 @@ void Game::UpdateGame()
     {
         delete actor;
     }
+
+    // Update audio system
+    mAudioSystem->Update(deltaTime);
 }
 
 void Game::GenerateOutput()
@@ -216,9 +234,21 @@ void Game::LoadData()
     // 실제 게임에서는 다양항 방향광이 존재할 수 있지만 현재 버전에서는 하나의 방향광만 지원한다.
     mRenderer->SetAmbientLight(Vector3(0.2f, 0.2f, 0.2f));
     DirectionalLight& dir = mRenderer->GetDirectionalLight();
-    dir.mDirection = Vector3(0.5f, -0.707f, -0.707f);
-    dir.mDiffuseColor = Vector3(0.5f, 0.5f, 0.5f);
+    dir.mDirection = Vector3(0.0f, -0.707f, -0.707f);
+    dir.mDiffuseColor = Vector3(0.78f, 0.88f, 1.0f);
     dir.mSpecColor = Vector3(0.8f, 0.8f, 0.8f);
+
+    // audio components 재생을 담당할 구 생성
+    a = new Actor(this);
+    a->SetPosition(Vector3(500.0f, -75.0f, 0.0f));
+    a->SetScale(1.0f);
+    mc = new MeshComponent(a);
+    mc->SetMesh(mRenderer->GetMesh("../Assets/Sphere.gpmesh"));
+    AudioComponent* ac = new AudioComponent(a);
+    ac->PlayEvent("event:/FireLoop");
+
+    mMusicEvent = mAudioSystem->PlayEvent("event:/Music");
+
 }
 
 void Game::UnloadData()
@@ -241,6 +271,10 @@ void Game::Shutdown()
     if (mRenderer)
     {
         mRenderer->Shutdown();
+    }
+    if (mAudioSystem)
+    {
+        mAudioSystem->Shutdown();
     }
     SDL_Quit();
 }
