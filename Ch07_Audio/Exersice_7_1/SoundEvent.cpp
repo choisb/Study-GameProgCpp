@@ -146,7 +146,7 @@ namespace
     }
 }
 
-void SoundEvent::Set3DAttributes(const Matrix4& worldTrans)
+void SoundEvent::Set3DAttributes(const Matrix4& worldTrans, const Vector3& velocity)
 {
     auto event = mSystem ? mSystem->GetEventInstance(mID) : nullptr;
     if (event)
@@ -159,7 +159,7 @@ void SoundEvent::Set3DAttributes(const Matrix4& worldTrans)
         // 세 번째 행은 상향 벡터
         attr.up = VecToFMOD(worldTrans.GetZAxis());
         // 속도를 0으로 설정 (도플러 효과를 사용한다면 수정)
-        attr.velocity = { 0.0f, 0.0f, 0.0f };
+        attr.velocity = VecToFMOD(velocity);
         event->set3DAttributes(&attr);
     }
 }

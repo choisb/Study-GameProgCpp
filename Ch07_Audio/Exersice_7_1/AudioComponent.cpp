@@ -55,7 +55,7 @@ void AudioComponent::OnUpdateWorldTransform()
     {
         if (event.IsValid())
         {
-            event.Set3DAttributes(world);
+            event.Set3DAttributes(world, mOwner->GetForward() * mOwner->GetForwardSpeed());
         }
     }
 }
@@ -68,7 +68,7 @@ SoundEvent AudioComponent::PlayEvent(const std::string& name)
     {
         mEvents3D.emplace_back(e);
         // 초기 3D 속성 설정
-        e.Set3DAttributes(mOwner->GetWorldTransform());
+        e.Set3DAttributes(mOwner->GetWorldTransform(), mOwner->GetForward() * mOwner->GetForwardSpeed());
     }
     else
     {

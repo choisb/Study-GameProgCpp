@@ -25,7 +25,7 @@ public:
     float GetParameter(const std::string& name);
     // 위치 기반 함수
     bool Is3D() const;
-    void Set3DAttributes(const Matrix4& worldTrans);
+    void Set3DAttributes(const Matrix4& worldTrans, const Vector3& velocity);
 
 protected:
     // 생성자를 protected로 선언하고 AudioSystem에서만 접근할 수 있도록 

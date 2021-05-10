@@ -9,6 +9,7 @@ Actor::Actor(Game* game)
     ,mRotation(Quaternion::Identity)
     ,mGame(game)
     ,mRecomputeWorldTransform(true)
+    ,mForwardSpeed(0.f)
 {
     mGame->AddActor(this);
 }

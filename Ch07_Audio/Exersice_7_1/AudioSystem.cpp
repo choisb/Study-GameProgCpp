@@ -13,7 +13,7 @@ AudioSystem::AudioSystem(Game* game)
     ,mSystem(nullptr)
     ,mLowLevelSystem(nullptr)
 {
-
+    
 }
 AudioSystem::~AudioSystem()
 {
@@ -58,6 +58,12 @@ bool AudioSystem::Initialize()
         SDL_Log("Failed to create FMOD system %s", FMOD_ErrorString(result));
         return false;
     }
+
+    mLowLevelSystem->set3DSettings(
+        1.f,    // 도플러 스케일, 1 = 정상, 1보다 더 크면 과장된 소리를 낸다
+        50.f,   // 게임 단위의 크기 = 1미터 (7장 프로젝트는 50이 적당함)
+        1.f     // (도플러와 관계없음, 1로 남겨둔다)
+    );
 
 
     // 모든 FMOD 스튜디오 프로젝트는 아래의 두 뱅크를 기본 뱅크로 반드시 가지고 있다.
@@ -278,7 +284,7 @@ namespace
     }
 }
 
-void AudioSystem::SetListener(const Matrix4& viewMatrix)
+void AudioSystem::SetListener(const Matrix4& viewMatrix, const Vector3& velocity)
 {
     // 카메라의 위치는 뷰 행렬의 역행렬에서 구할 수 있다.
     Matrix4 invView = viewMatrix;
@@ -291,7 +297,7 @@ void AudioSystem::SetListener(const Matrix4& viewMatrix)
     // 뷰 행렬의 역행렬에서 두 번째 행은 상향 벡터
     listener.up = VecToFMOD(invView.GetYAxis());
     // 속도를 0으로 설정 (도플러 효과를 사용할 시 수정)
-    listener.velocity = { 0.0f, 0.0f, 0.0f };
+    listener.velocity = VecToFMOD(velocity);
     // FMOD로 보낸다 (0 = 리스너는 하나)
     mSystem->setListenerAttributes(0, &listener);
 }

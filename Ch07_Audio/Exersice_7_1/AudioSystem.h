@@ -36,7 +36,7 @@ public:
     void Update(float deltaTime);
 
     // 위치 기반 오디오
-    void SetListener(const Matrix4& viewMatrix);
+    void SetListener(const Matrix4& viewMatrix, const Vector3& velocity);
 
     // 버스 제어를 위한 getter / setter
     float GetBusVolume(const std::string& name) const;

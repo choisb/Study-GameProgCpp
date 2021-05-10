@@ -12,7 +12,7 @@ public:
         EDead
     };
     // 의존성 주입(dependency injection). actor 생성자가 Game 클래스의 포인터를 받는다.
-    // Actor는 다른 Actor를 생성하거나 Game 함수에 접근하기 위햏 이 포인터를 사용할 수 있다.
+    // Actor는 다른 Actor를 생성하거나 Game 함수에 접근하기 위해 이 포인터를 사용할 수 있다.
     Actor(class Game* game);
     virtual ~Actor();
 
@@ -41,12 +41,17 @@ public:
 
     class Game* GetGame() { return mGame; }
 
+    float GetForwardSpeed() const { return mForwardSpeed; }
+
     // 컴포넌트 추가/제거
     void AddComponent(class Component* component);
     void RemoveComponent(class Component* component);
 
 	void ProcessInput(const uint8_t* keyState);
 	virtual void ActorInput(const uint8_t* keyState) {}
+
+protected:
+    float mForwardSpeed;
 
 private:
     // 액터의 상태
@@ -64,4 +69,6 @@ private:
 
     // 액터가 속한 Game 객체의 주소
     class Game* mGame;
+
+
 };

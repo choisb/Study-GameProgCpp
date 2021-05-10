@@ -36,21 +36,22 @@ void CameraActor::UpdateActor(float deltaTime)
     Matrix4 view = Matrix4::CreateLookAt(cameraPos, target, up);
     GetGame()->GetRenderer()->SetViewMatrix(view);
     // audioSystem에서 리스너 설정 갱신
-    GetGame()->GetAudioSystem()->SetListener(view);
+    GetGame()->GetAudioSystem()->SetListener(view, mForwardSpeed * GetForward());
 }
 
 void CameraActor::ActorInput(const uint8_t* keys)
 {
-    float forwardSpeed = 0.0f;
     float angularSpeed = 0.0f;
+    mForwardSpeed = 0.f;
+
     // wasd movement
     if (keys[SDL_SCANCODE_W])
     {
-        forwardSpeed += 300.0f;
+        mForwardSpeed += 300.0f;
     }
     if (keys[SDL_SCANCODE_S])
     {
-        forwardSpeed -= 300.0f;
+        mForwardSpeed -= 300.0f;
     }
     if (keys[SDL_SCANCODE_A])
     {
@@ -61,7 +62,7 @@ void CameraActor::ActorInput(const uint8_t* keys)
         angularSpeed += Math::TwoPi;
     }
 
-    mMoveComp->SetForwardSpeed(forwardSpeed);
+    mMoveComp->SetForwardSpeed(mForwardSpeed);
     mMoveComp->SetAngularSpeed(angularSpeed);
 }
 
