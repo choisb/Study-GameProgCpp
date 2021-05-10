@@ -2,6 +2,7 @@
 #include "Actor.h"
 #include "Game.h"
 #include "AudioSystem.h"
+#include <SDL/SDL.h>
 
 AudioComponent::AudioComponent(Actor* owner, int updateOrder)
     :Component(owner, updateOrder)

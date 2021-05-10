@@ -37,7 +37,7 @@ bool AudioSystem::Initialize()
         SDL_Log("Failed to create FMOD system %s", FMOD_ErrorString(result));
         return false;
     }
-
+   
     // FMOD 시스템의 initialize 함수 호출
     result = mSystem->initialize(
         512,                        // 동시에 출력할 수 있는 사운드의 최대 갯수
@@ -45,10 +45,9 @@ bool AudioSystem::Initialize()
         FMOD_INIT_NORMAL,           // 기본 설정
         nullptr                     // 대부분 nullptr
     );
-    result = FMOD::Studio::System::create(&mSystem);
     if (result != FMOD_OK)
     {
-        SDL_Log("Failed to create FMOD system %s", FMOD_ErrorString(result));
+        SDL_Log("Failed to initialize FMOD system: %s", FMOD_ErrorString(result));
         return false;
     }
 
@@ -59,6 +58,7 @@ bool AudioSystem::Initialize()
         SDL_Log("Failed to create FMOD system %s", FMOD_ErrorString(result));
         return false;
     }
+
 
     // 모든 FMOD 스튜디오 프로젝트는 아래의 두 뱅크를 기본 뱅크로 반드시 가지고 있다.
     // 아래의 두 뱅크를 로드하지 않는다면 다른 뱅크나 이벤트에 액세스 할 수 없다.
@@ -90,7 +90,10 @@ void AudioSystem::LoadBank(const std::string& name)
         FMOD_STUDIO_LOAD_BANK_NORMAL,   // 일반적인 방식으로 로딩
         &bank                           // 뱅크 포인터 저장
     );
-
+    if (result != FMOD_OK)
+    {
+        SDL_Log("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
+    }
     const int maxPathLength = 512;
     if (result == FMOD_OK)
     {
@@ -210,7 +213,6 @@ void AudioSystem::UnloadAllBanks()
 }
 SoundEvent AudioSystem::PlayEvent(const std::string& name)
 {
-
     unsigned int retID = 0;
     // 이벤트가 존재하는지 확인
     auto iter = mEvents.find(name);

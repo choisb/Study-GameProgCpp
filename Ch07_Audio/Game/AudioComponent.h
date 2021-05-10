@@ -19,3 +19,4 @@ private:
     std::vector<SoundEvent> mEvents2D;
     std::vector<SoundEvent> mEvents3D;
 };
+

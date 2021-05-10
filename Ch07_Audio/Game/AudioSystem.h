@@ -68,7 +68,7 @@ private:
 
     // 이벤트 이름과 EventDescription 맵
     // key: FMOD가 할당한 이벤트 이름
-    // value: 이벤트 포인터
+    // value: EventDescription 포인터
     std::unordered_map<std::string, FMOD::Studio::EventDescription*> mEvents;
 
     // EventInstance를 관리하기 위한 이벤트 id 맵

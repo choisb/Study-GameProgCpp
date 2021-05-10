@@ -80,6 +80,15 @@ void Game::ProcessInput()
         case SDL_QUIT:
             mIsRunning = false;
             break;
+
+        case SDL_KEYDOWN:
+            if (!event.key.repeat)
+            {
+                HandleKeyPress(event.key.keysym.sym);
+            }
+            break;
+        default:
+            break;
         }
     }
 
@@ -90,13 +99,63 @@ void Game::ProcessInput()
     {
         mIsRunning = false;
     }
-
 	for (auto actor : mActors)
 	{
 		actor->ProcessInput(keyState);
 	}
 }
 
+void Game::HandleKeyPress(int key)
+{
+    switch (key)
+    {
+    case '-':
+    {
+        // master volume 감소
+        float volume = mAudioSystem->GetBusVolume("bus:/");
+        volume = Math::Max(0.0f, volume - 0.1f);
+        mAudioSystem->SetBusVolume("bus:/", volume);
+        break;
+    }
+    case '=':
+    {
+        // master volume 증가
+        float volume = mAudioSystem->GetBusVolume("bus:/");
+        volume = Math::Min(1.0f, volume + 0.1f);
+        mAudioSystem->SetBusVolume("bus:/", volume);
+        break;
+    }
+    case 'e':
+        // explosion 재생
+        mAudioSystem->PlayEvent("event:/Explosion2D");
+        break;
+    case 'm':
+        // mMusicEvent의 puase 상태 토글
+        mMusicEvent.SetPaused(!mMusicEvent.GetPaused());
+        break;
+
+    case 'r':
+        // 스냅샷을 통해서 SFX 버스의 리버브 DSP를 활성화/비활성화
+        if (!mReverbSnap.IsValid())
+        {
+            mReverbSnap = mAudioSystem->PlayEvent("snapshot:/WithReverb");
+        }
+        else
+        {
+            mReverbSnap.Stop();
+        }
+        break;
+    case '1':
+        // 기본 footstep surface
+        mCameraActor->SetFootstepSurface(0.0f);
+        break;
+    case '2':
+        mCameraActor->SetFootstepSurface(0.5f);
+        break;
+    default:
+        break;
+    }
+}
 void Game::UpdateGame()
 {
     // 마지막 프레임 이후로 16ms가 경과할 때 까지 대기

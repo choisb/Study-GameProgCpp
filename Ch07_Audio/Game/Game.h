@@ -24,6 +24,7 @@ public:
 private:
     // 게임 루프를 위한 헬퍼 함수
     void ProcessInput();
+    void HandleKeyPress(int key);
     void UpdateGame();
     void GenerateOutput();
     void LoadData();
@@ -45,4 +46,5 @@ private:
 
     class CameraActor* mCameraActor;
     SoundEvent mMusicEvent;
+    SoundEvent mReverbSnap;
 };
