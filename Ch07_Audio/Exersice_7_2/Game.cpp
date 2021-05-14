@@ -219,21 +219,7 @@ void Game::GenerateOutput()
 
 void Game::LoadData()
 {
-    // Create actors
-    Actor* a = new Actor(this);
-    a->SetPosition(Vector3(200.0f, 75.0f, 0.0f));
-    a->SetScale(100.0f);
-    Quaternion q(Vector3::UnitY, -Math::PiOver2);
-    q = Quaternion::Concatenate(q, Quaternion(Vector3::UnitZ, Math::Pi + Math::Pi / 4.0f));
-    a->SetRotation(q);
-    MeshComponent* mc = new MeshComponent(a);
-    mc->SetMesh(mRenderer->GetMesh("../Assets/Cube.gpmesh"));
-
-    a = new Actor(this);
-    a->SetPosition(Vector3(200.0f, -75.0f, 0.0f));
-    a->SetScale(3.0f);
-    mc = new MeshComponent(a);
-    mc->SetMesh(mRenderer->GetMesh("../Assets/Sphere.gpmesh"));
+    Actor* a;
 
     // Setup floor
     const float start = -1250.0f;
@@ -248,7 +234,7 @@ void Game::LoadData()
     }
 
     // Left/right walls
-    q = Quaternion(Vector3::UnitX, Math::PiOver2);
+    Quaternion q = Quaternion(Vector3::UnitX, Math::PiOver2);
     for (int i = 0; i < 10; i++)
     {
 	    a = new PlaneActor(this);
@@ -297,12 +283,14 @@ void Game::LoadData()
     dir.mDiffuseColor = Vector3(0.78f, 0.88f, 1.0f);
     dir.mSpecColor = Vector3(0.8f, 0.8f, 0.8f);
 
-    // audio components 재생을 담당할 구 생성
+    // audio components 재생을 담당할 큐브 생성
     a = new Actor(this);
     a->SetPosition(Vector3(500.0f, -75.0f, 0.0f));
-    a->SetScale(1.0f);
-    mc = new MeshComponent(a);
-    mc->SetMesh(mRenderer->GetMesh("../Assets/Sphere.gpmesh"));
+    a->SetScale(30.0f);
+    q = Quaternion(Vector3::UnitY, - Math::PiOver2);
+    a->SetRotation(q);
+    MeshComponent* mc = new MeshComponent(a);
+    mc->SetMesh(mRenderer->GetMesh("../Assets/Cube.gpmesh"));
     AudioComponent* ac = new AudioComponent(a);
     ac->PlayEvent("event:/FireLoop");
 

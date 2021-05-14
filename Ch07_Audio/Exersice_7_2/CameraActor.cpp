@@ -47,7 +47,7 @@ void CameraActor::UpdateActor(float deltaTime)
     Vector3 up = Vector3::UnitZ;
     Matrix4 view = Matrix4::CreateLookAt(mCameraPos, target, up);
     GetGame()->GetRenderer()->SetViewMatrix(view);
-    GetGame()->GetAudioSystem()->SetListener(view);
+    GetGame()->GetAudioSystem()->SetListener(view, GetPosition());
 }
 
 void CameraActor::ActorInput(const uint8_t* keys)

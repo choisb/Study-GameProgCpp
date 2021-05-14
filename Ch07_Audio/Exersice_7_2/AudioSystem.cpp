@@ -278,14 +278,14 @@ namespace
     }
 }
 
-void AudioSystem::SetListener(const Matrix4& viewMatrix)
+void AudioSystem::SetListener(const Matrix4& viewMatrix, const Vector3& playerPos)
 {
     // 카메라의 위치는 뷰 행렬의 역행렬에서 구할 수 있다.
     Matrix4 invView = viewMatrix;
     invView.Invert();
     FMOD_3D_ATTRIBUTES listener;
     // 리스너의 위치와 전방 벡터, 상향 벡터를 설정
-    listener.position = VecToFMOD(invView.GetTranslation());
+    listener.position = VecToFMOD(playerPos);
     // 뷰 행렬의 역행렬에서 세 번째 행은 전방 벡터
     listener.forward = VecToFMOD(invView.GetZAxis());
     // 뷰 행렬의 역행렬에서 두 번째 행은 상향 벡터
