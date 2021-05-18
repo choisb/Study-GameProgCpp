@@ -1,22 +1,19 @@
 #include "Game.h"
-#include "Renderer.h"
+#include "SDL/SDL_image.h"
+#include <GL/glew.h>
+#include <algorithm>
 #include "Actor.h"
 #include "SpriteComponent.h"
-#include "MeshComponent.h"
-#include "Mesh.h"
-#include "Texture.h"
-#include "CameraActor.h"
-#include "PlaneActor.h"
-#include "AudioSystem.h"
-#include "AudioComponent.h"
-#include <algorithm>
+#include "Ship.h"
+#include "Asteroid.h"
+#include "VertexArray.h"
+#include "Shader.h"
 
 Game::Game()
-    :mRenderer(nullptr)
-    ,mIsRunning(true)
-    ,mUpdatingActors(false)
-    ,mCameraActor(nullptr)
-    ,mAudioSystem(nullptr)
+    : mWindow(nullptr)
+    , mRenderer(nullptr)
+    , mIsRunning(true)
+    , mUpdatingActors(false)
 {
 }
 
@@ -30,30 +27,86 @@ bool Game::Initialize()
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
         return false;
     }
+    // OpenGL 윈도우 속성 설정 (반드시 윈도우 생성 전에 사용할 것)
+    // 함수 호출이 성공하면 0을 반환하고 실패하면 음수를 반환한다.
+    // 코어 OpenGL 프로파일 사용
+    // 코어(데스크탑용) 외에도 호환성, ES(모바일용) 프로파일이 있다.
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,    // profile 속성을 지정한다.
+                        SDL_GL_CONTEXT_PROFILE_CORE);   // core profile을 사용한다.
+      
+    // 3.3 버전으로 지정
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);   // 메이저 버전을 3으로 설정
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);   // 마이너 버전을 3으로 설정
 
-    // Renderer 생성 및 초기화
-    mRenderer = new Renderer(this);
-    if (!mRenderer->Initialize(1024.0f, 768.0f))
+    // RGBA 채널마다 8비트 크기인 색상 버퍼 요청
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);   
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8); 
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);  
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); 
+
+    // 더블 버퍼링 활성화
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);   
+    // OpenGL이 하드웨어 가속을 사용하도록 강제 (OpenGL 렌더링이 GPU 에서 수행되도록 함)   
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+
+
+    mWindow = SDL_CreateWindow(
+        "Game Programming in C++ (Chapter 5)", // 윈도우 제목
+        100,    // 윈도우의 좌측 상단 x좌표
+        100,    // 윈도우의 좌측 상단 y좌표
+        1024,   // 윈도우의 너비
+        768,    // 윈도우의 높이
+        SDL_WINDOW_OPENGL       // 플래그 (0은 어떠한 플래그도 설정되지 않음을 의미)
+    );
+
+    mContext = SDL_GL_CreateContext(mWindow);
+
+    // GLEW 초기화 ( GL/glew.h 헤더 include 해야함)
+    glewExperimental = GL_TRUE;
+    if (glewInit() != GLEW_OK)
     {
-        SDL_Log("Failed to initialize renderer");
-        delete mRenderer;
-        mRenderer = nullptr;
+        SDL_Log("Failed to initialize GLEW.");
+        return false;
+    }
+    // 일부 플랫폼에서 GLEW은 에러 코드를 내보낸다.
+    // 그러므로 에러값을 제거하자
+    glGetError();
+
+    if (!mWindow)
+    {
+        SDL_Log("Failed to create window: %s", SDL_GetError());
         return false;
     }
 
-    // AudioSystem 생성
-    mAudioSystem = new AudioSystem(this);
-    if (!mAudioSystem->Initialize())
+    mRenderer = SDL_CreateRenderer(
+        mWindow,    // 렌더링을 위해 생성한 윈도우
+        -1,         // 사용할 그래픽카드 선택. -1인 경우 SDL이 알아서 선택 
+        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC    // 플래그 값.가속화 렌더러 사용 여부와 수직 동기화의 활성화 여부 선택.
+    );
+    if (!mRenderer)
     {
-        SDL_Log("Failed to initialize audio system");
-        mAudioSystem->Shutdown();
-        delete mAudioSystem;
-        mAudioSystem = nullptr;
+        SDL_Log("Failed to create renderer: %s", SDL_GetError());
         return false;
     }
+
+    if (IMG_Init(IMG_INIT_PNG) == 0)
+    {
+        SDL_Log("Unable to initialize SDL_image: %s", SDL_GetError());
+        return false;
+    }
+
+    // 셰이더들을 로드한다.
+    if (!LoadShader())
+    {
+        SDL_Log("Failed to load shaders.");
+        return false;
+    }    // 스프라이트를 그리기 위한 사각형 생성
+    CreateSpriteVerts();
 
     LoadData();
+
     mTicksCount = SDL_GetTicks();
+
     return true;
 }
 
@@ -80,15 +133,6 @@ void Game::ProcessInput()
         case SDL_QUIT:
             mIsRunning = false;
             break;
-
-        case SDL_KEYDOWN:
-            if (!event.key.repeat)
-            {
-                HandleKeyPress(event.key.keysym.sym);
-            }
-            break;
-        default:
-            break;
         }
     }
 
@@ -99,63 +143,15 @@ void Game::ProcessInput()
     {
         mIsRunning = false;
     }
+
+	mUpdatingActors = true;
 	for (auto actor : mActors)
 	{
 		actor->ProcessInput(keyState);
 	}
+	mUpdatingActors = false;
 }
 
-void Game::HandleKeyPress(int key)
-{
-    switch (key)
-    {
-    case '-':
-    {
-        // master volume 감소
-        float volume = mAudioSystem->GetBusVolume("bus:/");
-        volume = Math::Max(0.0f, volume - 0.1f);
-        mAudioSystem->SetBusVolume("bus:/", volume);
-        break;
-    }
-    case '=':
-    {
-        // master volume 증가
-        float volume = mAudioSystem->GetBusVolume("bus:/");
-        volume = Math::Min(1.0f, volume + 0.1f);
-        mAudioSystem->SetBusVolume("bus:/", volume);
-        break;
-    }
-    case 'e':
-        // explosion 재생
-        mAudioSystem->PlayEvent("event:/Explosion2D");
-        break;
-    case 'm':
-        // mMusicEvent의 puase 상태 토글
-        mMusicEvent.SetPaused(!mMusicEvent.GetPaused());
-        break;
-
-    case 'r':
-        // 스냅샷을 통해서 SFX 버스의 리버브 DSP를 활성화/비활성화
-        if (!mReverbSnap.IsValid())
-        {
-            mReverbSnap = mAudioSystem->PlayEvent("snapshot:/WithReverb");
-        }
-        else
-        {
-            mReverbSnap.Stop();
-        }
-        break;
-    case '1':
-        // 기본 footstep surface
-        mCameraActor->SetFootstepSurface(0.0f);
-        break;
-    case '2':
-        mCameraActor->SetFootstepSurface(0.5f);
-        break;
-    default:
-        break;
-    }
-}
 void Game::UpdateGame()
 {
     // 마지막 프레임 이후로 16ms가 경과할 때 까지 대기
@@ -206,110 +202,70 @@ void Game::UpdateGame()
     {
         delete actor;
     }
-
-    // Update audio system
-    mAudioSystem->Update(deltaTime);
 }
 
 void Game::GenerateOutput()
 {
-    mRenderer->Draw();
-}
+    // 색상을 회색으로 설정
+    glClearColor(0.86f, 0.86f, 0.86f, 1.0f);
+    // 색상 버퍼 초기화
+    glClear(GL_COLOR_BUFFER_BIT);
 
+    // Sprite::Draw() 함수에서 glDrawElements()가 실행된다.
+    // 이 glDrawElements() 함수를 사용하기 위해서는 
+    // "매프레임마다" 활성화된 버텍스 배열 개체와, 셰이더가 반드시 있어야 한다.
+    // 그래서 Draw()함수를 호출하기 전에 각각을 활성화 한다.
+    mSpriteShader->SetActive();
+    mSpriteVerts->SetActive();
+
+    // 알파블렌딩을 활성화
+    glEnable(GL_BLEND);
+    glBlendFunc(
+        GL_SRC_ALPHA,           // srcFactor = srcAlpha
+        GL_ONE_MINUS_SRC_ALPHA  // dstFactor = 1 - srcAlpha
+    );
+
+    for (auto sprite : mSprites)
+    {
+        sprite->Draw(mSpriteShader);
+    }
+
+    // 버퍼를 스왑해서 장면을 출력한다.
+    SDL_GL_SwapWindow(mWindow);
+}
+void Game::CreateSpriteVerts()
+{
+    float vertices[] = {
+        //  x,     y,    z,    u,    v  // 버텍스 위치(x,y,z) 텍스처 맵핑(u,v)
+        -0.5f,  0.5f,  0.f,  0.f,  0.f, // top left
+         0.5f,  0.5f,  0.f,  1.f,  0.f, // top right
+         0.5f, -0.5f,  0.f,  1.f,  1.f, // bottom right
+        -0.5f, -0.5f,  0.f,  0.f,  1.f  // bottom left
+    };
+
+    unsigned int indices[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
+    // 스프라이트를 그리기 위한 4각형 스프라이트 VertexArray 생성과정
+    // 앞으로 모든 sprite들은 이 멤버변수를 사용한다.
+    mSpriteVerts = new VertexArray(vertices, 4, indices, 6);
+}
 
 void Game::LoadData()
 {
-    // Create actors
-    Actor* a = new Actor(this);
-    a->SetPosition(Vector3(200.0f, 75.0f, 0.0f));
-    a->SetScale(100.0f);
-    Quaternion q(Vector3::UnitY, -Math::PiOver2);
-    q = Quaternion::Concatenate(q, Quaternion(Vector3::UnitZ, Math::Pi + Math::Pi / 4.0f));
-    a->SetRotation(q);
-    MeshComponent* mc = new MeshComponent(a);
-    mc->SetMesh(mRenderer->GetMesh("../Assets/Cube.gpmesh"));
+	// Create player's ship
+	mShip = new Ship(this);
+	//mShip->SetPosition(Vector2(512.0f, 384.0f));
+	mShip->SetRotation(Math::PiOver2);
 
-    a = new Actor(this);
-    a->SetPosition(Vector3(200.0f, -75.0f, 0.0f));
-    a->SetScale(3.0f);
-    mc = new MeshComponent(a);
-    mc->SetMesh(mRenderer->GetMesh("../Assets/Sphere.gpmesh"));
-
-    // Setup floor
-    const float start = -1250.0f;
-    const float size = 250.0f;
-    for (int i = 0; i < 10; i++)
-    {
-	    for (int j = 0; j < 10; j++)
-	    {
-		    a = new PlaneActor(this);
-		    a->SetPosition(Vector3(start + i * size, start + j * size, -100.0f));
-	    }
-    }
-
-    // Left/right walls
-    q = Quaternion(Vector3::UnitX, Math::PiOver2);
-    for (int i = 0; i < 10; i++)
-    {
-	    a = new PlaneActor(this);
-	    a->SetPosition(Vector3(start + i * size, start - size, 0.0f));
-	    a->SetRotation(q);
-	
-	    a = new PlaneActor(this);
-	    a->SetPosition(Vector3(start + i * size, -start + size, 0.0f));
-	    a->SetRotation(q);
-    }
-
-    q = Quaternion::Concatenate(q, Quaternion(Vector3::UnitZ, Math::PiOver2));
-    // Forward/back walls
-    for (int i = 0; i < 10; i++)
-    {
-	    a = new PlaneActor(this);
-	    a->SetPosition(Vector3(start - size, start + i * size, 0.0f));
-	    a->SetRotation(q);
-
-	    a = new PlaneActor(this);
-	    a->SetPosition(Vector3(-start + size, start + i * size, 0.0f));
-	    a->SetRotation(q);
-    }
- 
-    // UI elements
-    a = new Actor(this);
-    a->SetPosition(Vector3(-350.0f, -350.0f, 0.0f));
-    SpriteComponent* sc = new SpriteComponent(a);
-    sc->SetTexture(mRenderer->GetTexture("../Assets/HealthBar.png"));
-
-    a = new Actor(this);
-    a->SetPosition(Vector3(375.0f, -275.0f, 0.0f));
-    a->SetScale(0.75f);
-    sc = new SpriteComponent(a);
-    sc->SetTexture(mRenderer->GetTexture("../Assets/Radar.png"));
-
-    // Camera actor
-    mCameraActor = new CameraActor(this);
-
-
-    // 게임에 존재하는 유일한 방향광을 설정한다. 
-    // 실제 게임에서는 다양항 방향광이 존재할 수 있지만 현재 버전에서는 하나의 방향광만 지원한다.
-    mRenderer->SetAmbientLight(Vector3(0.2f, 0.2f, 0.2f));
-    DirectionalLight& dir = mRenderer->GetDirectionalLight();
-    dir.mDirection = Vector3(0.0f, -0.707f, -0.707f);
-    dir.mDiffuseColor = Vector3(0.78f, 0.88f, 1.0f);
-    dir.mSpecColor = Vector3(0.8f, 0.8f, 0.8f);
-
-    // audio components 재생을 담당할 구 생성
-    a = new Actor(this);
-    a->SetPosition(Vector3(500.0f, -75.0f, 0.0f));
-    a->SetScale(1.0f);
-    mc = new MeshComponent(a);
-    mc->SetMesh(mRenderer->GetMesh("../Assets/Sphere.gpmesh"));
-    AudioComponent* ac = new AudioComponent(a);
-    ac->PlayEvent("event:/FireLoop");
-
-    mMusicEvent = mAudioSystem->PlayEvent("event:/Music");
+	const int numAsteroids = 20;
+	for (int i = 0; i < numAsteroids; i++)
+	{
+		new Asteroid(this);
+	}
 
 }
-
 void Game::UnloadData()
 {
     // delete actors
@@ -317,24 +273,62 @@ void Game::UnloadData()
     {
         delete mActors.back();
     }
-    if (mRenderer)
+}
+bool Game::LoadShader()
+{
+    mSpriteShader = new Shader();
+    if (!mSpriteShader->Load("Shaders/Sprite.vert", "Shaders/Sprite.frag"))
     {
-        mRenderer->UnloadData();
+        return false;
     }
+    mSpriteShader->SetActive();
+    // 화면 너비가 1024x768인 view proj 변환행렬
+    Matrix4 viewProj = Matrix4::CreateSimpleViewProj(1024.f, 768.f);
+    mSpriteShader->SetMatrixUniform("uViewProj", viewProj);
+
+    return true;
 }
 
+Texture* Game::GetTexture(const std::string& fileName)
+{
+    // 반환할 texture의 주소값을 담을 변수
+    Texture* tex = nullptr;
+
+    // unordered_map 컨테이너에 저장되어 있는 mTextures에서 fileName으로 검색
+    auto iter = mTextures.find(fileName);
+    // fileName에 해당하는 texture가 존재한다면
+    if (iter != mTextures.end())
+    {
+        tex = iter->second;
+    }
+    else
+    {
+        tex = new Texture();
+
+        // 파일로부터 로딩
+        if (tex->Load(fileName))
+        {
+            mTextures.emplace(fileName.c_str(), tex);
+        }
+        else
+        {
+            delete tex;
+            tex = nullptr;
+        }
+    }
+    return tex;
+}
 
 void Game::Shutdown()
 {
-    UnloadData();
-    if (mRenderer)
-    {
-        mRenderer->Shutdown();
-    }
-    if (mAudioSystem)
-    {
-        mAudioSystem->Shutdown();
-    }
+    delete mSpriteVerts;
+    // OpenGL 콘텍스트 제거
+    mSpriteShader->Unload();
+    delete mSpriteShader;
+    SDL_GL_DeleteContext(mContext);
+    // mWindow 객체 해제.
+    SDL_DestroyWindow(mWindow);
+    SDL_DestroyRenderer(mRenderer);
     SDL_Quit();
 }
 
@@ -368,6 +362,49 @@ void Game::RemoveActor(Actor* actor)
     }
 }
 
+void Game::AddSprite(SpriteComponent* sprite)
+{
+    // 정렬된 벡터에서 사입해야 할 위치를 찾는다.
+    // (자신보다 그리기 순서값이 큰 최초 요소)
+    int myDrawOrder = sprite->GetDrawOrder();
+    auto iter = mSprites.begin();
+    for (; iter != mSprites.end(); ++iter)
+    {
+        if (myDrawOrder < (*iter)->GetDrawOrder())
+        {
+            break;
+        }
+    }
+    // 반복자 위치 앞에 요소를 삽입한다.
+    mSprites.insert(iter, sprite);
+}
 
+void Game::RemoveSprite(SpriteComponent* sprite)
+{
+    auto iter = std::find(mSprites.begin(), mSprites.end(), sprite);
+    mSprites.erase(iter);
 
+    // mDrawOrder 순으로 정렬되어 있기 때문에
+    // swap(), pop()을 통해서 삭제 할 수 없다.
 
+    //if (iter != mSprites.end())
+    //{
+    //    std::iter_swap(iter, mSprites.end() - 1);
+    //    mSprites.pop_back();
+    //}
+}
+
+void Game::AddAsteroid(Asteroid* ast)
+{
+	mAsteroids.emplace_back(ast);
+}
+
+void Game::RemoveAsteroid(Asteroid* ast)
+{
+	auto iter = std::find(mAsteroids.begin(),
+		mAsteroids.end(), ast);
+	if (iter != mAsteroids.end())
+	{
+		mAsteroids.erase(iter);
+	}
+}

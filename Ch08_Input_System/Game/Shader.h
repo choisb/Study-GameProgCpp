@@ -19,16 +19,6 @@ public:
     // - matrix: 입력하고자 하는 값
     void SetMatrixUniform(const char* name, const Matrix4& matrix);
 
-    // 셰이더의 vec3 uniform 설정 함수
-    // - name: 셰이더 파일 내에 존재하는 uniform 변수 이름
-    // - Vector3: 입력하고자 하는 Vector3값
-    void SetVectorUniform(const char* name, const Vector3& vector);
-
-    // 셰이더의 float uniform 설정 함수
-    // - name: 셰이더 파일 내에 존재하는 uniform 변수 이름
-    // - float: 입력하고자 하는 Vector3값
-    void SetFloatUniform(const char* name, float value);
-
 private:
     // 지정된 셰이더를 컴파일
     bool CompileShader(const std::string& fileName, 

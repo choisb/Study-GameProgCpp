@@ -9,8 +9,7 @@ uniform mat4 uViewProj;
 // layout 명령어는 속성 슬롯이 어떤 변수에 해당하는지 지정할 수 있다.
 // 여기서 속성 슬롯이란 glVertexAttribPointer 함수를 호출했을 때의 슬롯 번호이다.
 layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec3 inNormal;
-layout(location = 2) in vec2 inTexCoord;
+layout(location = 1) in vec2 inTexCoord;
 
 // 버텍스 셰이더로 입력된 텍스쳐 좌표를 프래그먼트 셰이더로 전달하기 위한 변수
 // out 변수를 선언하면 버텍스 셰이더에서 프래그먼트 셰이더로 데이터 전달이 가능하다.

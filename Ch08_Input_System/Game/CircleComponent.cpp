@@ -7,7 +7,7 @@ CircleComponent::CircleComponent(class Actor* owner)
 
 }
 
-const Vector3& CircleComponent::GetCenter() const
+const Vector2& CircleComponent::GetCenter() const
 {
 	return mOwner->GetPosition();
 }
@@ -20,7 +20,7 @@ float CircleComponent::GetRadius() const
 bool Intersect(const CircleComponent& a, const CircleComponent& b)
 {
 	// 거리 제곱값을 계산
-	Vector3 diff = a.GetCenter() - b.GetCenter();
+	Vector2 diff = a.GetCenter() - b.GetCenter();
 	float distSq = diff.LengthSq();
 
 	// 반지름 합의 제곱을 계산
