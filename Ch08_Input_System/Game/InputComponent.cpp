@@ -1,19 +1,20 @@
 #include "InputComponent.h"
+#include "InputSystem.h"
 
 InputComponent::InputComponent(class Actor* owner)
 	:MoveComponent(owner)
 {
 }
 
-void InputComponent::ProcessInput(const uint8_t* keyState)
+void InputComponent::ProcessInput(const InputState& state)
 {
 	// MoveComponent를 위한 전방 속도 계산
 	float forwardSpeed = 0.0f;
-	if (keyState[mForwardKey])
+	if (state.Keyboard.GetKeyValue(SDL_Scancode(mForwardKey)))
 	{
 		forwardSpeed += mMaxForwardSpeed;
 	}
-	if (keyState[mBackKey])
+	if (state.Keyboard.GetKeyValue(SDL_Scancode(mBackKey)))
 	{
 		forwardSpeed -= mMaxForwardSpeed;
 	}
@@ -21,11 +22,11 @@ void InputComponent::ProcessInput(const uint8_t* keyState)
 
 	// MoveComponent를 위한 각 속도 계산
 	float angularSpeed = 0.0f;
-	if (keyState[mClockwiseKey])
+	if (state.Keyboard.GetKeyValue(SDL_Scancode(mClockwiseKey)))
 	{
 		angularSpeed += mMaxAngularSpeed;
 	}
-	if (keyState[mCounterClockwiseKey])
+	if (state.Keyboard.GetKeyValue(SDL_Scancode(mCounterClockwiseKey)))
 	{
 		angularSpeed -= mMaxAngularSpeed;
 	}

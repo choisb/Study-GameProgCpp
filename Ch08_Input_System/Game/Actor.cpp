@@ -63,15 +63,15 @@ void Actor::RemoveComponent(Component* component)
         mComponents.erase(iter);
     }
 }
-void Actor::ProcessInput(const uint8_t* keyState)
+void Actor::ProcessInput(const struct InputState& state)
 {
 	if (mState == EActive)
 	{
 		for (auto comp : mComponents)
 		{
-			comp->ProcessInput(keyState);
+			comp->ProcessInput(state);
 		}
-		ActorInput(keyState);
+		ActorInput(state);
 	}
 }
 void Actor::ComputeWorldTransform()

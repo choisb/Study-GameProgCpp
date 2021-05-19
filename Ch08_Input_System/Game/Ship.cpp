@@ -4,6 +4,7 @@
 #include "SpriteComponent.h"
 #include "InputComponent.h"
 #include "Laser.h"
+#include "InputSystem.h" 
 
 Ship::Ship(Game* game)
     : Actor(game)
@@ -26,10 +27,11 @@ void Ship::UpdateActor(float deltaTime)
 	mLaserCooldown -= deltaTime;
 }
 
-void Ship::ActorInput(const uint8_t* keyState)
+void Ship::ActorInput(const InputState& state)
 {
 	// 스페이스바가 눌러졌고, cool down 시간이 지났다면 laser 생성
-	if (keyState[SDL_SCANCODE_SPACE] && mLaserCooldown <= 0.0f)
+    
+	if (state.Keyboard.GetKeyValue(SDL_SCANCODE_SPACE) && mLaserCooldown <= 0.0f)
 	{
 		// 레이저를 생성하고 레이저의 위치와 회전값을 설정
 		Laser* laser = new Laser(GetGame());

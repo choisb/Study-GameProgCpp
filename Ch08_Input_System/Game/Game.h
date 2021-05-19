@@ -54,6 +54,7 @@ private:
     bool mUpdatingActors;
 
     SDL_Renderer* mRenderer;
+    class InputSystem* mInputSystem;
 
     //OpenGL 변수
     SDL_GLContext mContext; // context는 OpenGL에서 하나의 세계를 뜻한다. (한 프로그램에 복수개의 context도 가능하다.)

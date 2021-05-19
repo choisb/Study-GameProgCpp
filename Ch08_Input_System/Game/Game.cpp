@@ -8,6 +8,7 @@
 #include "Asteroid.h"
 #include "VertexArray.h"
 #include "Shader.h"
+#include "InputSystem.h"
 
 Game::Game()
     : mWindow(nullptr)
@@ -19,7 +20,7 @@ Game::Game()
 
 bool Game::Initialize()
 {
-    int sdResult = SDL_Init(SDL_INIT_VIDEO);    // 성공시 0을 반환
+    int sdResult = SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_GAMECONTROLLER);    // 성공시 0을 반환
     if (sdResult != 0)
     {
         // SDL_Log는 C의 Printf와 같은 문법 사용
@@ -58,6 +59,22 @@ bool Game::Initialize()
         768,    // 윈도우의 높이
         SDL_WINDOW_OPENGL       // 플래그 (0은 어떠한 플래그도 설정되지 않음을 의미)
     );
+
+    if (!mWindow)
+    {
+        SDL_Log("Failed to create window: %s", SDL_GetError());
+        return false;
+    }
+
+    // input system 초기화
+    mInputSystem = new InputSystem();
+    if(!mInputSystem->Initialize())
+    {
+        SDL_Log("Failed to initialize input system");
+        mInputSystem->Shutdown();
+        delete mInputSystem;
+        mInputSystem = nullptr;
+    }
 
     mContext = SDL_GL_CreateContext(mWindow);
 
@@ -122,6 +139,8 @@ void Game::RunLoop()
 
 void Game::ProcessInput()
 {
+    mInputSystem->PrepareForUpdate();
+
     SDL_Event event;
 
     // 큐에 여전히 이벤트가 남아 있는 동안
@@ -133,13 +152,18 @@ void Game::ProcessInput()
         case SDL_QUIT:
             mIsRunning = false;
             break;
+        case SDL_MOUSEWHEEL:
+            mInputSystem->ProcessEvent(event);
+            break;
+        default:
+            break;
         }
     }
 
-    // 키보드 상태 얻기
-    const Uint8* keyState = SDL_GetKeyboardState(NULL);
-    // 이스케이프 키를 눌렀다면 루프 종료
-    if (keyState[SDL_SCANCODE_ESCAPE])
+    mInputSystem->Update();
+    const InputState& state = mInputSystem->GetState();
+
+    if (state.Keyboard.GetKeyState(SDL_SCANCODE_ESCAPE) == EReleased)
     {
         mIsRunning = false;
     }
@@ -147,7 +171,7 @@ void Game::ProcessInput()
 	mUpdatingActors = true;
 	for (auto actor : mActors)
 	{
-		actor->ProcessInput(keyState);
+		actor->ProcessInput(state);
 	}
 	mUpdatingActors = false;
 }
@@ -324,6 +348,11 @@ void Game::Shutdown()
     delete mSpriteVerts;
     // OpenGL 콘텍스트 제거
     mSpriteShader->Unload();
+
+    // input system 제거
+    mInputSystem->Shutdown();
+    delete mInputSystem;
+
     delete mSpriteShader;
     SDL_GL_DeleteContext(mContext);
     // mWindow 객체 해제.

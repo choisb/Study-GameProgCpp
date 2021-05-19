@@ -45,8 +45,8 @@ public:
     void AddComponent(class Component* component);
     void RemoveComponent(class Component* component);
 
-	void ProcessInput(const uint8_t* keyState);
-	virtual void ActorInput(const uint8_t* keyState) {}
+	void ProcessInput(const struct InputState& state);
+	virtual void ActorInput(const struct InputState& state) {}
 
 private:
     // 액터의 상태
