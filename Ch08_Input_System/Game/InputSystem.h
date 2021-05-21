@@ -58,7 +58,30 @@ private:
 // Helper for controller input
 class ControllerState
 {
+public:
+    friend class InputSystem;
 
+    // 버튼
+    bool GetButtonValue(SDL_GameControllerButton button) const;
+    ButtonState GetButtonState(SDL_GameControllerButton button) const;
+
+    float GetLeftTrigger() const { return mLeftTrigger; }
+    float GetRightTrigger() const { return mRightTrigger; }
+
+    bool GetIsConnected() const { return mIsConnected; }
+
+private:
+    // 현재/이전 버튼
+    Uint8 mCurrButtons[SDL_CONTROLLER_BUTTON_MAX];
+    Uint8 mPrevButtons[SDL_CONTROLLER_BUTTON_MAX];
+    // 왼쪽 오른쪽 조이스틱
+    Vector2 mLeftStick;
+    Vector2 mRightStick;
+    // 왼쪽 오른쪽 트리거
+    float mLeftTrigger;
+    float mRightTrigger;
+    // 컨트롤러가 연결돼 있는가?
+    bool mIsConnected;
 };
 
 // 입력의 현재 상태를 포함하는 래퍼
@@ -88,6 +111,8 @@ public:
 
     void SetRelativeMouseMode(bool value);
 private:
+    float Filter1D(int input);
+    Vector2 Filter2D(int inputX, int inputY);
     InputState mState;
     SDL_GameController* mController;
 };
