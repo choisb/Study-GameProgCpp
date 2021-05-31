@@ -44,7 +44,9 @@ private:
     bool mIsRunning;        // 게임이 계속 실행돼야 하는지를 판단.
     bool mUpdatingActors;
 
-    class CameraActor* mCameraActor;
+    // Game-specific code
+    class SpriteComponent* mCrosshair;
+    class FPSActor* mFPSActor;
     SoundEvent mMusicEvent;
     SoundEvent mReverbSnap;
 };

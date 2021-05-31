@@ -10,15 +10,19 @@ public:
 	void Update(float deltaTime) override;
 
 	float GetAngularSpeed() const { return mAngularSpeed; }
-	float GetForwardSpeed() const { return mForwardSpeed; }
-	void SetAngularSpeed(float speed) { mAngularSpeed = speed; }
+    float GetForwardSpeed() const { return mForwardSpeed; }
+    float GetStrafeSpeed() const { return mStrafeSpeed; }
+    void SetAngularSpeed(float speed) { mAngularSpeed = speed; }
 	void SetForwardSpeed(float speed) { mForwardSpeed = speed; }
+    void SetStrafeSpeed(float speed) { mStrafeSpeed = speed; }
 
 private:
-	// 회전을 제어(초당 라디안)
+	// 회전 각속도(초당 라디안)
 	float mAngularSpeed;
-	// 전방 이동을 제어(초당 단위)
+	// 전방 이동 속도(초당 단위)
 	float mForwardSpeed;
+    // 좌우 이동 속도(초당 단위)
+    float mStrafeSpeed;
 
 
 };

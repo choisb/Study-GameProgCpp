@@ -38,6 +38,7 @@ public:
     void SetState(State state) { mState = state; }
 
     Vector3 GetForward() const { return Vector3::Transform(Vector3::UnitX, mRotation); }
+    Vector3 GetRight() const { return Vector3::Transform(Vector3::UnitY, mRotation); }
 
     class Game* GetGame() { return mGame; }
 

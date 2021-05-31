@@ -5,17 +5,16 @@
 #include "MeshComponent.h"
 #include "Mesh.h"
 #include "Texture.h"
-#include "CameraActor.h"
 #include "PlaneActor.h"
 #include "AudioSystem.h"
 #include "AudioComponent.h"
+#include "FPSActor.h"
 #include <algorithm>
 
 Game::Game()
     :mRenderer(nullptr)
     ,mIsRunning(true)
     ,mUpdatingActors(false)
-    ,mCameraActor(nullptr)
     ,mAudioSystem(nullptr)
 {
 }
@@ -107,54 +106,7 @@ void Game::ProcessInput()
 
 void Game::HandleKeyPress(int key)
 {
-    switch (key)
-    {
-    case '-':
-    {
-        // master volume 감소
-        float volume = mAudioSystem->GetBusVolume("bus:/");
-        volume = Math::Max(0.0f, volume - 0.1f);
-        mAudioSystem->SetBusVolume("bus:/", volume);
-        break;
-    }
-    case '=':
-    {
-        // master volume 증가
-        float volume = mAudioSystem->GetBusVolume("bus:/");
-        volume = Math::Min(1.0f, volume + 0.1f);
-        mAudioSystem->SetBusVolume("bus:/", volume);
-        break;
-    }
-    case 'e':
-        // explosion 재생
-        mAudioSystem->PlayEvent("event:/Explosion2D");
-        break;
-    case 'm':
-        // mMusicEvent의 puase 상태 토글
-        mMusicEvent.SetPaused(!mMusicEvent.GetPaused());
-        break;
 
-    case 'r':
-        // 스냅샷을 통해서 SFX 버스의 리버브 DSP를 활성화/비활성화
-        if (!mReverbSnap.IsValid())
-        {
-            mReverbSnap = mAudioSystem->PlayEvent("snapshot:/WithReverb");
-        }
-        else
-        {
-            mReverbSnap.Stop();
-        }
-        break;
-    case '1':
-        // 기본 footstep surface
-        mCameraActor->SetFootstepSurface(0.0f);
-        break;
-    case '2':
-        mCameraActor->SetFootstepSurface(0.5f);
-        break;
-    default:
-        break;
-    }
 }
 void Game::UpdateGame()
 {
@@ -280,13 +232,25 @@ void Game::LoadData()
     sc->SetTexture(mRenderer->GetTexture("../Assets/HealthBar.png"));
 
     a = new Actor(this);
-    a->SetPosition(Vector3(375.0f, -275.0f, 0.0f));
+    a->SetPosition(Vector3(-390.0f, 275.0f, 0.0f));
     a->SetScale(0.75f);
     sc = new SpriteComponent(a);
     sc->SetTexture(mRenderer->GetTexture("../Assets/Radar.png"));
 
-    // Camera actor
-    mCameraActor = new CameraActor(this);
+    a = new Actor(this);
+    a->SetScale(2.0f);
+    mCrosshair = new SpriteComponent(a);
+    mCrosshair->SetTexture(mRenderer->GetTexture("../Assets/Crosshair.png"));
+
+    mMusicEvent = mAudioSystem->PlayEvent("event:/Music");
+
+    // Enable relative mouse mode for camera look
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+    // Make an initial call to get relative to clear out
+    SDL_GetRelativeMouseState(nullptr, nullptr);
+
+    // Different camera actors
+    mFPSActor = new FPSActor(this);
 
 
     // 게임에 존재하는 유일한 방향광을 설정한다. 
@@ -297,16 +261,7 @@ void Game::LoadData()
     dir.mDiffuseColor = Vector3(0.78f, 0.88f, 1.0f);
     dir.mSpecColor = Vector3(0.8f, 0.8f, 0.8f);
 
-    // audio components 재생을 담당할 구 생성
-    a = new Actor(this);
-    a->SetPosition(Vector3(500.0f, -75.0f, 0.0f));
-    a->SetScale(1.0f);
-    mc = new MeshComponent(a);
-    mc->SetMesh(mRenderer->GetMesh("../Assets/Sphere.gpmesh"));
-    AudioComponent* ac = new AudioComponent(a);
-    ac->PlayEvent("event:/FireLoop");
 
-    mMusicEvent = mAudioSystem->PlayEvent("event:/Music");
 
 }
 

@@ -288,7 +288,7 @@ bool Renderer::LoadShaders()
         Math::ToRadians(70.0f), // 수평 FOV
         mScreenWidth,           // 뷰의 너비
         mScreenHeight,          // 뷰의 높이
-        25.0f,                  // 가까운 평면과의 거리
+        10.0f,                  // 가까운 평면과의 거리
         100000.0f               // 먼 평면과의 거리
     );
     mMeshShader->SetMatrixUniform("uViewProj", mView * mProjection);
