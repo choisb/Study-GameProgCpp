@@ -47,6 +47,8 @@ private:
     // Game-specific code
     class SpriteComponent* mCrosshair;
     class FPSActor* mFPSActor;
+    class FollowActor* mFollowActor;
     SoundEvent mMusicEvent;
     SoundEvent mReverbSnap;
+    void ChangeCamera(int mode);
 };

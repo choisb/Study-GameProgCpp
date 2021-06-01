@@ -102,3 +102,8 @@ void FPSActor::ActorInput(const uint8_t* keys)
     mCameraComp->SetPitchSpeed(pitchSpeed);
 
 }
+
+void FPSActor::SetVisible(bool visible)
+{
+    mMeshComp->SetVisible(visible);
+}

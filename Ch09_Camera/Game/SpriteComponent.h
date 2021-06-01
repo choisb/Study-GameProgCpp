@@ -15,6 +15,9 @@ public:
     int GetTexHeight() const { return mTexHeight; }
     int GetTexWidth() const { return mTexWidth; }
 
+    void SetVisible(bool visible) { mVisible = visible; }
+    bool GetVisible() const { return mVisible; }
+
 protected:
     // 그릴 텍스처
     class Texture* mTexture;
@@ -23,4 +26,5 @@ protected:
     // 텍스처의 너비 / 높이
     int mTexWidth;
     int mTexHeight;
+    bool mVisible;
 };

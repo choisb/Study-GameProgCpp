@@ -9,6 +9,7 @@
 #include "AudioSystem.h"
 #include "AudioComponent.h"
 #include "FPSActor.h"
+#include "FollowActor.h"
 #include <algorithm>
 
 Game::Game()
@@ -251,6 +252,9 @@ void Game::LoadData()
 
     // Different camera actors
     mFPSActor = new FPSActor(this);
+    mFollowActor = new FollowActor(this);
+
+    ChangeCamera('1');
 
 
     // 게임에 존재하는 유일한 방향광을 설정한다. 
@@ -260,9 +264,6 @@ void Game::LoadData()
     dir.mDirection = Vector3(0.0f, -0.707f, -0.707f);
     dir.mDiffuseColor = Vector3(0.78f, 0.88f, 1.0f);
     dir.mSpecColor = Vector3(0.8f, 0.8f, 0.8f);
-
-
-
 }
 
 void Game::UnloadData()
@@ -323,6 +324,29 @@ void Game::RemoveActor(Actor* actor)
     }
 }
 
+void Game::ChangeCamera(int mode)
+{
+    // 모든 엑터들을 비활성화한다.
+    mFPSActor->SetState(Actor::EPaused);
+    mFPSActor->SetVisible(false);
+    mCrosshair->SetVisible(false);
+    mFollowActor->SetState(Actor::EPaused);
+    mFollowActor->SetVisible(false);
 
+    switch (mode)
+    {
+    case '1':
+    default:
+        mFPSActor->SetState(Actor::EActive);
+        mFPSActor->SetVisible(true);
+        mCrosshair->SetVisible(true);
+        break;
+
+    case '2':
+        mFollowActor->SetState(Actor::EActive);
+        mFollowActor->SetVisible(true);
+        break;
+    }
+}
 
 

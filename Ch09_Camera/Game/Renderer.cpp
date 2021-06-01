@@ -139,10 +139,13 @@ void Renderer::Draw()
     SetLightUniforms(mMeshShader);
 
     // 모든 메시에 동일한 셰이더 적용 중.
-	for (auto mc : mMeshComps)
-	{
-		mc->Draw(mMeshShader);
-	}
+    for (auto mc : mMeshComps)
+    {
+        if (mc->GetVisible())
+        {
+            mc->Draw(mMeshShader);
+        }
+    }
 
 	// 3D 메시 모두 그리고 UI등 2D 스프라이트 그리기 시작
 	// DEPTH 버퍼 비활성화
@@ -158,7 +161,10 @@ void Renderer::Draw()
     // 모든 스프라이트를 그린다.
 	for (auto sprite : mSprites)
 	{
-		sprite->Draw(mSpriteShader);
+        if (sprite->GetVisible())
+        {
+            sprite->Draw(mSpriteShader);
+        }
 	}
 
 	// Swap the buffers
