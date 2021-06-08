@@ -48,6 +48,7 @@ private:
     class SpriteComponent* mCrosshair;
     class FPSActor* mFPSActor;
     class FollowActor* mFollowActor;
+    class OrbitActor* mOrbitActor;
     SoundEvent mMusicEvent;
     SoundEvent mReverbSnap;
     void ChangeCamera(int mode);

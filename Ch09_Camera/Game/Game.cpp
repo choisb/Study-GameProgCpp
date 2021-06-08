@@ -10,6 +10,7 @@
 #include "AudioComponent.h"
 #include "FPSActor.h"
 #include "FollowActor.h"
+#include "OrbitActor.h"
 #include <algorithm>
 
 Game::Game()
@@ -87,6 +88,9 @@ void Game::ProcessInput()
                 HandleKeyPress(event.key.keysym.sym);
             }
             break;
+        case SDL_MOUSEBUTTONDOWN:
+            HandleKeyPress(event.button.button);
+            break;
         default:
             break;
         }
@@ -107,7 +111,37 @@ void Game::ProcessInput()
 
 void Game::HandleKeyPress(int key)
 {
+    switch (key)
+    {
+    case '-':
+    {
+        // master volume 감소
+        float volume = mAudioSystem->GetBusVolume("bus:/");
+        volume = Math::Max(0.0f, volume - 0.1f);
+        mAudioSystem->SetBusVolume("bus:/", volume);
+        break;
+    }
+    case '=':
+    {
+        // master volume 증가
+        float volume = mAudioSystem->GetBusVolume("bus:/");
+        volume = Math::Min(1.0f, volume + 0.1f);
+        mAudioSystem->SetBusVolume("bus:/", volume);
+        break;
+    }
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+        ChangeCamera(key);
+        break;
+    case SDL_BUTTON_LEFT:
+    {
 
+    }
+    default:
+        break;
+    }
 }
 void Game::UpdateGame()
 {
@@ -253,6 +287,7 @@ void Game::LoadData()
     // Different camera actors
     mFPSActor = new FPSActor(this);
     mFollowActor = new FollowActor(this);
+    mOrbitActor = new OrbitActor(this);
 
     ChangeCamera('1');
 
@@ -332,6 +367,8 @@ void Game::ChangeCamera(int mode)
     mCrosshair->SetVisible(false);
     mFollowActor->SetState(Actor::EPaused);
     mFollowActor->SetVisible(false);
+    mOrbitActor->SetState(Actor::EPaused);
+    mOrbitActor->SetVisible(false);
 
     switch (mode)
     {
@@ -345,6 +382,11 @@ void Game::ChangeCamera(int mode)
     case '2':
         mFollowActor->SetState(Actor::EActive);
         mFollowActor->SetVisible(true);
+        break;
+
+    case '3':
+        mOrbitActor->SetState(Actor::EActive);
+        mOrbitActor->SetVisible(true);
         break;
     }
 }

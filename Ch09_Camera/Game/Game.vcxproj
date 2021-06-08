@@ -159,6 +159,8 @@ xcopy "C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\studi
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshComponent.cpp" />
     <ClCompile Include="MoveComponent.cpp" />
+    <ClCompile Include="OrbitActor.cpp" />
+    <ClCompile Include="OrbitCamera.cpp" />
     <ClCompile Include="PlaneActor.cpp" />
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="Renderer.cpp" />
@@ -184,6 +186,8 @@ xcopy "C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\studi
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshComponent.h" />
     <ClInclude Include="MoveComponent.h" />
+    <ClInclude Include="OrbitActor.h" />
+    <ClInclude Include="OrbitCamera.h" />
     <ClInclude Include="PlaneActor.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="Renderer.h" />
