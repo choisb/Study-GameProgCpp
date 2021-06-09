@@ -49,6 +49,7 @@ private:
     class FPSActor* mFPSActor;
     class FollowActor* mFollowActor;
     class OrbitActor* mOrbitActor;
+    class SplineActor* mSplineActor;
     SoundEvent mMusicEvent;
     SoundEvent mReverbSnap;
     void ChangeCamera(int mode);

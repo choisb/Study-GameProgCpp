@@ -11,6 +11,7 @@
 #include "FPSActor.h"
 #include "FollowActor.h"
 #include "OrbitActor.h"
+#include "SplineActor.h"
 #include <algorithm>
 
 Game::Game()
@@ -288,9 +289,9 @@ void Game::LoadData()
     mFPSActor = new FPSActor(this);
     mFollowActor = new FollowActor(this);
     mOrbitActor = new OrbitActor(this);
+    mSplineActor = new SplineActor(this);
 
     ChangeCamera('1');
-
 
     // 게임에 존재하는 유일한 방향광을 설정한다. 
     // 실제 게임에서는 다양항 방향광이 존재할 수 있지만 현재 버전에서는 하나의 방향광만 지원한다.
@@ -369,6 +370,7 @@ void Game::ChangeCamera(int mode)
     mFollowActor->SetVisible(false);
     mOrbitActor->SetState(Actor::EPaused);
     mOrbitActor->SetVisible(false);
+    mSplineActor->SetState(Actor::EPaused);
 
     switch (mode)
     {
@@ -387,6 +389,10 @@ void Game::ChangeCamera(int mode)
     case '3':
         mOrbitActor->SetState(Actor::EActive);
         mOrbitActor->SetVisible(true);
+        break;
+    case '4':
+        mSplineActor->SetState(Actor::EActive);
+        mSplineActor->RestartSpline();
         break;
     }
 }

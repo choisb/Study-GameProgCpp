@@ -93,6 +93,12 @@
     <ClCompile Include="OrbitActor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SplineActor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SplineCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h">
@@ -168,6 +174,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OrbitActor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SplineCamera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SplineActor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
