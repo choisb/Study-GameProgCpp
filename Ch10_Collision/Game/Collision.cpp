@@ -218,7 +218,6 @@ float AABB::MinDistSq(const Vector3& point) const
 
     // 거리의 제곱 식
     return dx * dx + dy * dy + dz * dz;
-
 }
 Capsule::Capsule(const Vector3& start, const Vector3& end, float radius)
     :mSegment(start, end)
@@ -291,4 +290,159 @@ bool Intersect(const Capsule& a, const Capsule& b)
     float distSq = LineSegment::MinDistSq(a.mSegment, b.mSegment);
     float sumRadii = a.mRadius + b.mRadius;
     return distSq <= (sumRadii * sumRadii);
+}
+bool Intersect(const LineSegment& l, const Plane& p, float& outT)
+{
+    // 분모값을 확인해서 t의 해가 존재하는지 확인
+    float denom = Vector3::Dot(l.mEnd - l.mStart, p.mNormal);
+    if (Math::NearZero(denom)) // 분모가 0에 가깝다면
+    {
+        // 선과 평면이 교차하는 유일한 길은
+        // 두 점이 모두 평면상의 점인 경우. 즉 (P dot N) == d 평면의 방벙식을 만족해야 한다.
+        if (Math::NearZero(Vector3::Dot(l.mStart, p.mNormal) - p.mD))
+        {
+            outT = 0.0f;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        float numer = -Vector3::Dot(l.mStart, p.mNormal) - p.mD;
+        outT = numer / denom;
+        // t가 선분 범위 내의 값인지 검증
+        if (outT >= 0.0f && outT <= 1.0f)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+}
+bool Intersect(const LineSegment& l, const Sphere& s, float& outT)
+{
+    // 방정식에 등장한 X, Y, a, b, c를 계산
+    Vector3 X = l.mStart - s.mCenter;
+    Vector3 Y = l.mEnd - l.mStart;
+    float a = Vector3::Dot(Y, Y);
+    float b = 2.0f * Vector3::Dot(X, Y);
+    float c = Vector3::Dot(X, X) - s.mRadius * s.mRadius;
+    // 판별식을 계산
+    float disc = b * b - 4.0f * a * c;
+    if (disc < 0.0f)
+    {
+        return false;
+    }
+    else
+    {
+        disc = Math::Sqrt(disc);
+        // t의 min / max 해를 계산
+        float tMin = (-b - disc) / (2.0f * a);
+        float tMax = (-b + disc) / (2.0f * a);
+        // t의 값이 선분 범위 내에 있는지 검사
+        if (tMin >= 0.0f && tMin <= 1.0f)
+        {
+            outT = tMin;
+            return true;
+        }
+        else if (tMax >= 0.0f && tMax <= 1.0f)
+        {
+            outT = tMax;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+}
+bool TestSidePlane(float start, float end, float negd, std::vector<float>& out)
+{
+    float denom = end - start;
+    if (Math::NearZero(denom))
+    {
+        return false;
+    }
+    else
+    {
+        float numer = -start + negd;
+        float t = numer / denom;
+        // t값이 범위 내에 있는지 검사
+        if (t >= 0.0f && t <= 1.0f)
+        {
+            out.emplace_back(t);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+}
+bool Intersect(const LineSegment& l, const AABB& b, float& outT, Vector3& outNorm)
+{
+    // 교차 가능성 있는 모든 t값을 저장하는 벡터 선언
+    std::vector<float> tValues;
+    // x축에 수직한 평면 2개와 선분간 교차 확인
+    TestSidePlane(l.mStart.x, l.mEnd.x, b.mMin.x, tValues);
+    TestSidePlane(l.mStart.x, l.mEnd.x, b.mMax.x, tValues);
+    // y축에 수직한 평면 2개와 선분간 교차 확인
+    TestSidePlane(l.mStart.y, l.mEnd.y, b.mMin.y, tValues);
+    TestSidePlane(l.mStart.y, l.mEnd.y, b.mMax.y, tValues);
+    // z축에 수직한 평면 2개와 선분간 교차 확인
+    TestSidePlane(l.mStart.z, l.mEnd.z, b.mMin.z, tValues);
+    TestSidePlane(l.mStart.z, l.mEnd.z, b.mMax.z, tValues);
+
+    // 오름차순으로 t값 정렬
+    std::sort(tValues.begin(), tValues.end());
+    // 박스가 이 교차점들을 포함하는지 확인
+    Vector3 point;
+    for (float t : tValues)
+    {
+        if (b.Contains(point))
+        {
+            outT = t;
+            return true;
+        }
+    }
+
+    // 박스와 교차하는 점이 하나도 없다
+    return false;
+}
+
+bool SweptSphere(const Sphere& P0, const Sphere& P1, 
+    const Sphere& Q0, const Sphere& Q1, float& outT)
+{
+    // X, Y, a, b, c를 계산
+    Vector3 X = P0.mCenter - Q0.mCenter;
+    Vector3 Y = P1.mCenter - P0.mCenter - (Q1.mCenter - Q0.mCenter);
+    float a = Vector3::Dot(Y, Y);
+    float b = 2.0f * Vector3::Dot(X, Y);
+    float sumRadii = P0.mRadius + Q0.mRadius;
+    float c = Vector3::Dot(X, X) - sumRadii * sumRadii;
+    // 판별식을 계산한다.
+    float disc = b * b - 4.0f * a * c;
+    if (disc < 0.0f)
+    {
+        return false;
+    }
+    else
+    {
+        disc = Math::Sqrt(disc);
+        // 최초 충돌만이 의미가 있으므로 2개의 해 중 작은 해만 다룬다
+        outT = (-b - disc) / (2.0f * a);
+        if (outT >= 0.0f && outT <= 0.0f)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 }
