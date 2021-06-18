@@ -8,6 +8,9 @@
 #include "MeshComponent.h"
 #include "Game.h"
 #include "Mesh.h"
+#include "BoxComponent.h"
+#include "PlaneActor.h"
+#include "BallActor.h"
 
 FPSActor::FPSActor(Game* game)
     :Actor(game)
@@ -24,11 +27,30 @@ FPSActor::FPSActor(Game* game)
     mFPSModel->SetScale(0.75f);
     mMeshComp = new MeshComponent(mFPSModel);
     mMeshComp->SetMesh(game->GetRenderer()->GetMesh("../Assets/Rifle.gpmesh"));
+
+    // Add a box component
+    mBoxComp = new BoxComponent(this);
+    AABB myBox(Vector3(-25.0f, -25.0f, -87.5f),
+        Vector3(25.0f, 25.0f, 87.5f));
+    mBoxComp->SetObjectBox(myBox);
+    mBoxComp->SetShouldRotate(false);
 }
 
 void FPSActor::UpdateActor(float deltaTime)
 {
     Actor::UpdateActor(deltaTime);
+
+    FixCollisions();
+
+    mLastFootstep -= deltaTime;
+    if ((!Math::NearZero(mMoveComp->GetForwardSpeed()) ||
+        !Math::NearZero(mMoveComp->GetStrafeSpeed())) &&
+        mLastFootstep <= 0.0f)
+    {
+        mFootstep.SetPaused(false);
+        mFootstep.Restart();
+        mLastFootstep = 0.5f;
+    }
 
     // 액터 위치에 대한 FPS 모델의 상대적인 위치 갱신
     const Vector3 modelOffset(Vector3(10.0f, 10.0f, -10.0f));
@@ -102,8 +124,89 @@ void FPSActor::ActorInput(const uint8_t* keys)
     mCameraComp->SetPitchSpeed(pitchSpeed);
 
 }
-
+void FPSActor::SetFootstepSurface(float value)
+{
+    // Pause here because the way I setup the parameter in FMOD
+    // changing it will play a footstep
+    mFootstep.SetPaused(true);
+    mFootstep.SetParameter("Surface", value);
+}
 void FPSActor::SetVisible(bool visible)
 {
     mMeshComp->SetVisible(visible);
+}
+void FPSActor::Shoot()
+{
+    // Get start point (in center of screen on near plane)
+    Vector3 screenPoint(0.0f, 0.0f, 0.0f);
+    Vector3 start = GetGame()->GetRenderer()->Unproject(screenPoint);
+    // Get end point (in center of screen, between near and far)
+    screenPoint.z = 0.9f;
+    Vector3 end = GetGame()->GetRenderer()->Unproject(screenPoint);
+    // Get direction vector
+    Vector3 dir = end - start;
+    dir.Normalize();
+    // Spawn a ball
+    BallActor* ball = new BallActor(GetGame());
+    ball->SetPlayer(this);
+    ball->SetPosition(start + dir * 20.0f);
+    // Rotate the ball to face new direction
+    ball->RotateToNewForward(dir);
+    // Play shooting sound
+    mAudioComp->PlayEvent("event:/Shot");
+}
+
+void FPSActor::FixCollisions()
+{
+    // 박스를 갱신하기 전에 자신의 세계 변환 재계산이 필요
+    ComputeWorldTransform();
+
+    const AABB& playerBox = mBoxComp->GetWorldBox();
+    Vector3 pos = GetPosition();
+
+    auto& planes = GetGame()->GetPlanes();
+    for (auto pa : planes)
+    {
+        // 이 planeActor와 충돌하는가?
+        const AABB& planeBox = pa->GetBox()->GetWorldBox();
+        if (Intersect(playerBox, planeBox))
+        {
+            // 각 축으로 겹침값을 계산
+            float dx1 = planeBox.mMin.x - playerBox.mMax.x;
+            float dx2 = planeBox.mMax.x - playerBox.mMin.x;
+            float dy1 = planeBox.mMin.y - playerBox.mMax.y;
+            float dy2 = planeBox.mMax.y - playerBox.mMin.y;
+            float dz1 = planeBox.mMin.z - playerBox.mMax.z;
+            float dz2 = planeBox.mMax.z - playerBox.mMin.z;
+
+            // dx1 / dx2 값중 절댓값이 가장 작은 값을 dx로 설정
+            float dx = (Math::Abs(dx1) < Math::Abs(dx2)) ? dx1 : dx2;
+            // 위의 로직과 똑같이 dy를 구함
+            float dy = (Math::Abs(dy1) < Math::Abs(dy2)) ? dy1 : dy2;
+            // 위의 로직과 똑같이 dz를 구함
+            float dz = (Math::Abs(dz1) < Math::Abs(dz2)) ? dz1 : dz2;
+
+            // 최소 겹침이 가장 작은 값으로 x/y/z 위치를 보정한다
+            // dx가 가장 작을 경우
+            if (Math::Abs(dx) <= Math::Abs(dy) &&
+                Math::Abs(dx) <= Math::Abs(dz))
+            {
+                pos.x += dx;
+            }
+            // dy가 가장 작을 경우
+            else if (Math::Abs(dy) <= Math::Abs(dx) &&
+                     Math::Abs(dy) <= Math::Abs(dz))
+            {
+                pos.y += dy;
+            }
+            else
+            {
+                pos.z += dz;
+            }
+
+            // 재계산된 위치를 저장하고 박스 컴포넌트를 갱신한다
+            SetPosition(pos);
+            mBoxComp->OnUpdateWorldTransform();
+        }
+    }
 }

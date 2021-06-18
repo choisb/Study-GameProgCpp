@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include "Collision.h"
 
 class Mesh
 {
@@ -19,11 +20,14 @@ public:
     const std::string& GetShaderName() const { return mShaderName; }
     // 오브젝트 공간 바운딩 구체 반지름을 얻는다.
     float GetRadius() const { return mRadius; }
+    // Get object space bounding box
+    const AABB& GetBox() const { return mBox; }
     // 정반사 지수 반환
     float GetSpecPower() const { return mSpecPower; }
 
 private:
-
+    // AABB collision
+    AABB mBox;
     // 이 메시에 사용되는 텍스처들
     std::vector<class Texture*> mTextures;
     // 메시의 버텍스 배열

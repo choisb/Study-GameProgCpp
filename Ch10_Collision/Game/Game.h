@@ -20,6 +20,12 @@ public:
 
     class Renderer* GetRenderer() { return mRenderer; }
     class AudioSystem* GetAudioSystem() { return mAudioSystem; }
+    class PhysWorld* GetPhysWorld() { return mPhysWorld; }
+
+    // Game-specific
+    void AddPlane(class PlaneActor* plane);
+    void RemovePlane(class PlaneActor* plane);
+    std::vector<class PlaneActor*>& GetPlanes() { return mPlanes; }
 
 private:
     // 게임 루프를 위한 헬퍼 함수
@@ -39,18 +45,16 @@ private:
     // 출력과 관련있는 기능들이 모여있는 Renderer
     class Renderer* mRenderer;
     class AudioSystem* mAudioSystem;
+    class PhysWorld* mPhysWorld;
 
     Uint32 mTicksCount;
     bool mIsRunning;        // 게임이 계속 실행돼야 하는지를 판단.
     bool mUpdatingActors;
 
     // Game-specific code
+    std::vector<class PlaneActor*> mPlanes;
     class SpriteComponent* mCrosshair;
     class FPSActor* mFPSActor;
-    class FollowActor* mFollowActor;
-    class OrbitActor* mOrbitActor;
-    class SplineActor* mSplineActor;
+
     SoundEvent mMusicEvent;
-    SoundEvent mReverbSnap;
-    void ChangeCamera(int mode);
 };

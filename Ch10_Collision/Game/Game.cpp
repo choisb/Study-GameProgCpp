@@ -9,9 +9,8 @@
 #include "AudioSystem.h"
 #include "AudioComponent.h"
 #include "FPSActor.h"
-#include "FollowActor.h"
-#include "OrbitActor.h"
-#include "SplineActor.h"
+#include "PhysWorld.h"
+#include "TargetActor.h"
 #include <algorithm>
 
 Game::Game()
@@ -19,6 +18,7 @@ Game::Game()
     ,mIsRunning(true)
     ,mUpdatingActors(false)
     ,mAudioSystem(nullptr)
+    ,mPhysWorld(nullptr)
 {
 }
 
@@ -53,6 +53,8 @@ bool Game::Initialize()
         mAudioSystem = nullptr;
         return false;
     }
+    // physics world 생성
+    mPhysWorld = new PhysWorld(this);
 
     LoadData();
     mTicksCount = SDL_GetTicks();
@@ -68,6 +70,18 @@ void Game::RunLoop()
         GenerateOutput();
     }
 }
+
+void Game::AddPlane(PlaneActor* plane)
+{
+    mPlanes.emplace_back(plane);
+}
+
+void Game::RemovePlane(PlaneActor* plane)
+{
+    auto iter = std::find(mPlanes.begin(), mPlanes.end(), plane);
+    mPlanes.erase(iter);
+}
+
 
 void Game::ProcessInput()
 {
@@ -130,15 +144,11 @@ void Game::HandleKeyPress(int key)
         mAudioSystem->SetBusVolume("bus:/", volume);
         break;
     }
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-        ChangeCamera(key);
-        break;
+
     case SDL_BUTTON_LEFT:
     {
-
+        mFPSActor->Shoot();
+        break;
     }
     default:
         break;
@@ -208,59 +218,55 @@ void Game::GenerateOutput()
 void Game::LoadData()
 {
     // Create actors
-    Actor* a = new Actor(this);
-    a->SetPosition(Vector3(200.0f, 75.0f, 0.0f));
-    a->SetScale(100.0f);
-    Quaternion q(Vector3::UnitY, -Math::PiOver2);
-    q = Quaternion::Concatenate(q, Quaternion(Vector3::UnitZ, Math::Pi + Math::Pi / 4.0f));
-    a->SetRotation(q);
-    MeshComponent* mc = new MeshComponent(a);
-    mc->SetMesh(mRenderer->GetMesh("../Assets/Cube.gpmesh"));
-
-    a = new Actor(this);
-    a->SetPosition(Vector3(200.0f, -75.0f, 0.0f));
-    a->SetScale(3.0f);
-    mc = new MeshComponent(a);
-    mc->SetMesh(mRenderer->GetMesh("../Assets/Sphere.gpmesh"));
+    Actor* a = nullptr;
+    Quaternion q;
+    //MeshComponent* mc = nullptr;
 
     // Setup floor
     const float start = -1250.0f;
     const float size = 250.0f;
     for (int i = 0; i < 10; i++)
     {
-	    for (int j = 0; j < 10; j++)
-	    {
-		    a = new PlaneActor(this);
-		    a->SetPosition(Vector3(start + i * size, start + j * size, -100.0f));
-	    }
+        for (int j = 0; j < 10; j++)
+        {
+            a = new PlaneActor(this);
+            a->SetPosition(Vector3(start + i * size, start + j * size, -100.0f));
+        }
     }
 
     // Left/right walls
     q = Quaternion(Vector3::UnitX, Math::PiOver2);
     for (int i = 0; i < 10; i++)
     {
-	    a = new PlaneActor(this);
-	    a->SetPosition(Vector3(start + i * size, start - size, 0.0f));
-	    a->SetRotation(q);
-	
-	    a = new PlaneActor(this);
-	    a->SetPosition(Vector3(start + i * size, -start + size, 0.0f));
-	    a->SetRotation(q);
+        a = new PlaneActor(this);
+        a->SetPosition(Vector3(start + i * size, start - size, 0.0f));
+        a->SetRotation(q);
+
+        a = new PlaneActor(this);
+        a->SetPosition(Vector3(start + i * size, -start + size, 0.0f));
+        a->SetRotation(q);
     }
 
     q = Quaternion::Concatenate(q, Quaternion(Vector3::UnitZ, Math::PiOver2));
     // Forward/back walls
     for (int i = 0; i < 10; i++)
     {
-	    a = new PlaneActor(this);
-	    a->SetPosition(Vector3(start - size, start + i * size, 0.0f));
-	    a->SetRotation(q);
+        a = new PlaneActor(this);
+        a->SetPosition(Vector3(start - size, start + i * size, 0.0f));
+        a->SetRotation(q);
 
-	    a = new PlaneActor(this);
-	    a->SetPosition(Vector3(-start + size, start + i * size, 0.0f));
-	    a->SetRotation(q);
+        a = new PlaneActor(this);
+        a->SetPosition(Vector3(-start + size, start + i * size, 0.0f));
+        a->SetRotation(q);
     }
- 
+
+    // Setup lights
+    mRenderer->SetAmbientLight(Vector3(0.2f, 0.2f, 0.2f));
+    DirectionalLight& dir = mRenderer->GetDirectionalLight();
+    dir.mDirection = Vector3(0.0f, -0.707f, -0.707f);
+    dir.mDiffuseColor = Vector3(0.78f, 0.88f, 1.0f);
+    dir.mSpecColor = Vector3(0.8f, 0.8f, 0.8f);
+
     // UI elements
     a = new Actor(this);
     a->SetPosition(Vector3(-350.0f, -350.0f, 0.0f));
@@ -278,6 +284,7 @@ void Game::LoadData()
     mCrosshair = new SpriteComponent(a);
     mCrosshair->SetTexture(mRenderer->GetTexture("../Assets/Crosshair.png"));
 
+    // Start music
     mMusicEvent = mAudioSystem->PlayEvent("event:/Music");
 
     // Enable relative mouse mode for camera look
@@ -287,19 +294,16 @@ void Game::LoadData()
 
     // Different camera actors
     mFPSActor = new FPSActor(this);
-    mFollowActor = new FollowActor(this);
-    mOrbitActor = new OrbitActor(this);
-    mSplineActor = new SplineActor(this);
 
-    ChangeCamera('1');
-
-    // 게임에 존재하는 유일한 방향광을 설정한다. 
-    // 실제 게임에서는 다양항 방향광이 존재할 수 있지만 현재 버전에서는 하나의 방향광만 지원한다.
-    mRenderer->SetAmbientLight(Vector3(0.2f, 0.2f, 0.2f));
-    DirectionalLight& dir = mRenderer->GetDirectionalLight();
-    dir.mDirection = Vector3(0.0f, -0.707f, -0.707f);
-    dir.mDiffuseColor = Vector3(0.78f, 0.88f, 1.0f);
-    dir.mSpecColor = Vector3(0.8f, 0.8f, 0.8f);
+    // Create target actors
+    a = new TargetActor(this);
+    a->SetPosition(Vector3(1450.0f, 0.0f, 100.0f));
+    a = new TargetActor(this);
+    a->SetPosition(Vector3(1450.0f, 0.0f, 400.0f));
+    a = new TargetActor(this);
+    a->SetPosition(Vector3(1450.0f, -500.0f, 200.0f));
+    a = new TargetActor(this);
+    a->SetPosition(Vector3(1450.0f, 500.0f, 200.0f));
 }
 
 void Game::UnloadData()
@@ -319,6 +323,8 @@ void Game::UnloadData()
 void Game::Shutdown()
 {
     UnloadData();
+    delete mPhysWorld;
+
     if (mRenderer)
     {
         mRenderer->Shutdown();
@@ -357,43 +363,6 @@ void Game::RemoveActor(Actor* actor)
     if (iter != mPendingActors.end()) {
         std::iter_swap(iter, mPendingActors.end()-1);
         mPendingActors.pop_back();
-    }
-}
-
-void Game::ChangeCamera(int mode)
-{
-    // 모든 엑터들을 비활성화한다.
-    mFPSActor->SetState(Actor::EPaused);
-    mFPSActor->SetVisible(false);
-    mCrosshair->SetVisible(false);
-    mFollowActor->SetState(Actor::EPaused);
-    mFollowActor->SetVisible(false);
-    mOrbitActor->SetState(Actor::EPaused);
-    mOrbitActor->SetVisible(false);
-    mSplineActor->SetState(Actor::EPaused);
-
-    switch (mode)
-    {
-    case '1':
-    default:
-        mFPSActor->SetState(Actor::EActive);
-        mFPSActor->SetVisible(true);
-        mCrosshair->SetVisible(true);
-        break;
-
-    case '2':
-        mFollowActor->SetState(Actor::EActive);
-        mFollowActor->SetVisible(true);
-        break;
-
-    case '3':
-        mOrbitActor->SetState(Actor::EActive);
-        mOrbitActor->SetVisible(true);
-        break;
-    case '4':
-        mSplineActor->SetState(Actor::EActive);
-        mSplineActor->RestartSpline();
-        break;
     }
 }
 

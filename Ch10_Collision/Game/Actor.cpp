@@ -74,6 +74,29 @@ void Actor::ProcessInput(const uint8_t* keyState)
 		ActorInput(keyState);
 	}
 }
+void Actor::RotateToNewForward(const Vector3& forward)
+{
+    float dot = Vector3::Dot(Vector3::UnitX, forward);
+    float angle = Math::Acos(dot);
+    
+    // 진행 방향이 +X인가?
+    if (dot > 0.9999f)
+    {
+        SetRotation(Quaternion::Identity);
+    }
+    // 진행 방향이 -X인가?
+    else if (dot < -0.9999f)
+    {
+        SetRotation(Quaternion(Vector3::UnitZ, Math::Pi));
+    }
+    else
+    {
+        // 외적을 통해 얻은 축을 기준으로 회전하라
+        Vector3 axis = Vector3::Cross(Vector3::UnitX, forward);
+        axis.Normalize();
+        SetRotation(Quaternion(axis, angle));
+    }
+}
 void Actor::ComputeWorldTransform()
 {
     if (mRecomputeWorldTransform)

@@ -40,6 +40,9 @@ public:
     Vector3 GetForward() const { return Vector3::Transform(Vector3::UnitX, mRotation); }
     Vector3 GetRight() const { return Vector3::Transform(Vector3::UnitY, mRotation); }
 
+    // 진행 방향을 입력받는 forward로 설정
+    void RotateToNewForward(const Vector3& forward);
+
     class Game* GetGame() { return mGame; }
 
     // 컴포넌트 추가/제거
