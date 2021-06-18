@@ -361,7 +361,8 @@ bool Intersect(const LineSegment& l, const Sphere& s, float& outT)
         }
     }
 }
-bool TestSidePlane(float start, float end, float negd, std::vector<float>& out)
+bool TestSidePlane(float start, float end, float negd, const Vector3& norm,
+    std::vector<std::pair<float, Vector3>>& out)
 {
     float denom = end - start;
     if (Math::NearZero(denom))
@@ -372,10 +373,10 @@ bool TestSidePlane(float start, float end, float negd, std::vector<float>& out)
     {
         float numer = -start + negd;
         float t = numer / denom;
-        // t값이 범위 내에 있는지 검사
+        // Test that t is within bounds
         if (t >= 0.0f && t <= 1.0f)
         {
-            out.emplace_back(t);
+            out.emplace_back(t, norm);
             return true;
         }
         else
@@ -384,36 +385,51 @@ bool TestSidePlane(float start, float end, float negd, std::vector<float>& out)
         }
     }
 }
-bool Intersect(const LineSegment& l, const AABB& b, float& outT, Vector3& outNorm)
-{
-    // 교차 가능성 있는 모든 t값을 저장하는 벡터 선언
-    std::vector<float> tValues;
-    // x축에 수직한 평면 2개와 선분간 교차 확인
-    TestSidePlane(l.mStart.x, l.mEnd.x, b.mMin.x, tValues);
-    TestSidePlane(l.mStart.x, l.mEnd.x, b.mMax.x, tValues);
-    // y축에 수직한 평면 2개와 선분간 교차 확인
-    TestSidePlane(l.mStart.y, l.mEnd.y, b.mMin.y, tValues);
-    TestSidePlane(l.mStart.y, l.mEnd.y, b.mMax.y, tValues);
-    // z축에 수직한 평면 2개와 선분간 교차 확인
-    TestSidePlane(l.mStart.z, l.mEnd.z, b.mMin.z, tValues);
-    TestSidePlane(l.mStart.z, l.mEnd.z, b.mMax.z, tValues);
 
-    // 오름차순으로 t값 정렬
-    std::sort(tValues.begin(), tValues.end());
-    // 박스가 이 교차점들을 포함하는지 확인
+bool Intersect(const LineSegment& l, const AABB& b, float& outT,
+    Vector3& outNorm)
+{
+    // Vector to save all possible t values, and normals for those sides
+    std::vector<std::pair<float, Vector3>> tValues;
+    // Test the x planes
+    TestSidePlane(l.mStart.x, l.mEnd.x, b.mMin.x, Vector3::NegUnitX,
+        tValues);
+    TestSidePlane(l.mStart.x, l.mEnd.x, b.mMax.x, Vector3::UnitX,
+        tValues);
+    // Test the y planes
+    TestSidePlane(l.mStart.y, l.mEnd.y, b.mMin.y, Vector3::NegUnitY,
+        tValues);
+    TestSidePlane(l.mStart.y, l.mEnd.y, b.mMax.y, Vector3::UnitY,
+        tValues);
+    // Test the z planes
+    TestSidePlane(l.mStart.z, l.mEnd.z, b.mMin.z, Vector3::NegUnitZ,
+        tValues);
+    TestSidePlane(l.mStart.z, l.mEnd.z, b.mMax.z, Vector3::UnitZ,
+        tValues);
+
+    // Sort the t values in ascending order
+    std::sort(tValues.begin(), tValues.end(), [](
+        const std::pair<float, Vector3>& a,
+        const std::pair<float, Vector3>& b) {
+            return a.first < b.first;
+        });
+    // Test if the box contains any of these points of intersection
     Vector3 point;
-    for (float t : tValues)
+    for (auto& t : tValues)
     {
+        point = l.PointOnSegment(t.first);
         if (b.Contains(point))
         {
-            outT = t;
+            outT = t.first;
+            outNorm = t.second;
             return true;
         }
     }
 
-    // 박스와 교차하는 점이 하나도 없다
+    //None of the intersections are within bounds of box
     return false;
 }
+
 
 bool SweptSphere(const Sphere& P0, const Sphere& P1, 
     const Sphere& Q0, const Sphere& Q1, float& outT)

@@ -9,7 +9,7 @@ BoxComponent::BoxComponent(Actor* owner, int updateOrder)
     , mWorldBox(Vector3::Zero, Vector3::Zero)
     , mShouldRotate(true)
 {
-    //mOwner->GetGame()->GetPhysWorld()->AddBox(this);
+    mOwner->GetGame()->GetPhysWorld()->AddBox(this);
 }
 void BoxComponent::OnUpdateWorldTransform()
 {
