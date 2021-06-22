@@ -11,11 +11,15 @@
 #include "FPSActor.h"
 #include "PhysWorld.h"
 #include "TargetActor.h"
+#include "Font.h"
+#include "UIScreen.h"
+#include "HUD.h"
+#include "PauseMenu.h"
 #include <algorithm>
 
 Game::Game()
     :mRenderer(nullptr)
-    ,mIsRunning(true)
+    ,mGameState(EGameplay)
     ,mUpdatingActors(false)
     ,mAudioSystem(nullptr)
     ,mPhysWorld(nullptr)
@@ -56,6 +60,13 @@ bool Game::Initialize()
     // physics world 생성
     mPhysWorld = new PhysWorld(this);
 
+    // Initialize SDL_ttf
+    if (TTF_Init() != 0)
+    {
+        SDL_Log("Failed to initialize SDL_ttf");
+        return false;
+    }
+
     LoadData();
     mTicksCount = SDL_GetTicks();
     return true;
@@ -63,7 +74,7 @@ bool Game::Initialize()
 
 void Game::RunLoop()
 {
-    while (mIsRunning)
+    while (mGameState != EQuit)
     {
         ProcessInput();
         UpdateGame();
@@ -94,17 +105,32 @@ void Game::ProcessInput()
         {
             // 이벤트가 SDL_QUIT이면 루프를 종료한다.
         case SDL_QUIT:
-            mIsRunning = false;
+            mGameState = EQuit;
             break;
 
         case SDL_KEYDOWN:
             if (!event.key.repeat)
             {
-                HandleKeyPress(event.key.keysym.sym);
+                if (mGameState == EGameplay)
+                {
+                    HandleKeyPress(event.key.keysym.sym);
+                }
+                else if (!mUIStack.empty())
+                {
+                    mUIStack.back()->
+                        HandleKeyPress(event.key.keysym.sym);
+                }
             }
             break;
         case SDL_MOUSEBUTTONDOWN:
-            HandleKeyPress(event.button.button);
+            if (mGameState == EGameplay)
+            {
+                HandleKeyPress(event.button.button);
+            }
+            else if (!mUIStack.empty())
+            {
+                mUIStack.back()->HandleKeyPress(event.button.button);
+            }
             break;
         default:
             break;
@@ -113,21 +139,29 @@ void Game::ProcessInput()
 
     // 키보드 상태 얻기
     const Uint8* keyState = SDL_GetKeyboardState(NULL);
-    // 이스케이프 키를 눌렀다면 루프 종료
-    if (keyState[SDL_SCANCODE_ESCAPE])
+    if (mGameState == EGameplay)
     {
-        mIsRunning = false;
+        for (auto actor : mActors)
+        {
+            if (actor->GetState() == Actor::EActive)
+            {
+                actor->ProcessInput(keyState);
+            }
+        }
     }
-	for (auto actor : mActors)
-	{
-		actor->ProcessInput(keyState);
-	}
+    else if (!mUIStack.empty())
+    {
+        mUIStack.back()->ProcessInput(keyState);
+    }
 }
 
 void Game::HandleKeyPress(int key)
 {
     switch (key)
     {
+    case SDLK_ESCAPE:
+        new PauseMenu(this);
+        break;
     case '-':
     {
         // master volume 감소
@@ -172,41 +206,66 @@ void Game::UpdateGame()
     // 다음 프레임을 위해 현재 시간값 저장.
     mTicksCount = SDL_GetTicks();
 
-    // 모든 액터를 갱신
-    mUpdatingActors = true;
-    for (auto actor : mActors)
+    if (mGameState == EGameplay)
     {
-        actor->Update(deltaTime);
-    }
-    mUpdatingActors = false;
-
-    // 대기 중인 액터를 mActors로 이동
-    for (auto pending : mPendingActors)
-    {
-        // 생성된 직후 올바른 세계 변환을 가지기 위해서 변환을 계산한다.
-        pending->ComputeWorldTransform();
-        mActors.emplace_back(pending);
-    }
-    mPendingActors.clear();
-
-    // 죽은 액터를 임시 벡터에 추가
-    std::vector<Actor*> deadActors;
-    for (auto actor : mActors)
-    {
-        if (actor->GetState() == Actor::EDead)
+        // 모든 액터를 갱신
+        mUpdatingActors = true;
+        for (auto actor : mActors)
         {
-            deadActors.emplace_back(actor);
+            actor->Update(deltaTime);
+        }
+        mUpdatingActors = false;
+
+        // 대기 중인 액터를 mActors로 이동
+        for (auto pending : mPendingActors)
+        {
+            // 생성된 직후 올바른 세계 변환을 가지기 위해서 변환을 계산한다.
+            pending->ComputeWorldTransform();
+            mActors.emplace_back(pending);
+        }
+        mPendingActors.clear();
+
+        // 죽은 액터를 임시 벡터에 추가
+        std::vector<Actor*> deadActors;
+        for (auto actor : mActors)
+        {
+            if (actor->GetState() == Actor::EDead)
+            {
+                deadActors.emplace_back(actor);
+            }
+        }
+
+        // 죽은 액터 제거(mActors에서 추려낸 액터들)
+        for (auto actor : deadActors)
+        {
+            delete actor;
         }
     }
-
-    // 죽은 액터 제거(mActors에서 추려낸 액터들)
-    for (auto actor : deadActors)
-    {
-        delete actor;
-    }
-
     // Update audio system
     mAudioSystem->Update(deltaTime);
+
+    // Update UI screens
+    for (auto ui : mUIStack)
+    {
+        if (ui->GetState() == UIScreen::EActive)
+        {
+            ui->Update(deltaTime);
+        }
+    }
+    // Delete any UIScreens that are closed
+    auto iter = mUIStack.begin();
+    while (iter != mUIStack.end())
+    {
+        if ((*iter)->GetState() == UIScreen::EClosing)
+        {
+            delete *iter;
+            iter = mUIStack.erase(iter);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
 }
 
 void Game::GenerateOutput()
@@ -268,21 +327,7 @@ void Game::LoadData()
     dir.mSpecColor = Vector3(0.8f, 0.8f, 0.8f);
 
     // UI elements
-    a = new Actor(this);
-    a->SetPosition(Vector3(-350.0f, -350.0f, 0.0f));
-    SpriteComponent* sc = new SpriteComponent(a);
-    sc->SetTexture(mRenderer->GetTexture("../Assets/HealthBar.png"));
-
-    a = new Actor(this);
-    a->SetPosition(Vector3(-390.0f, 275.0f, 0.0f));
-    a->SetScale(0.75f);
-    sc = new SpriteComponent(a);
-    sc->SetTexture(mRenderer->GetTexture("../Assets/Radar.png"));
-
-    a = new Actor(this);
-    a->SetScale(2.0f);
-    mCrosshair = new SpriteComponent(a);
-    mCrosshair->SetTexture(mRenderer->GetTexture("../Assets/Crosshair.png"));
+    mHUD = new HUD(this);
 
     // Start music
     mMusicEvent = mAudioSystem->PlayEvent("event:/Music");
@@ -312,6 +357,18 @@ void Game::UnloadData()
     while (!mActors.empty())
     {
         delete mActors.back();
+    }
+    while (!mUIStack.empty())
+    {
+        delete mUIStack.back();
+        mUIStack.pop_back();
+    }
+    auto iter = mFonts.begin();
+    while(iter != mFonts.end())
+    {
+        iter->second->Unload();
+        delete iter->second;
+        ++iter;
     }
     if (mRenderer)
     {
@@ -366,4 +423,32 @@ void Game::RemoveActor(Actor* actor)
     }
 }
 
+void Game::PushUI(UIScreen* screen)
+{
+    mUIStack.emplace_back(screen);
+}
+
+Font* Game::GetFont(const std::string& fileName)
+{
+    auto iter = mFonts.find(fileName);
+    if (iter != mFonts.end())
+    {
+        return iter->second;
+    }
+    else
+    {
+        Font* font = new Font(this);
+        if (font->Load(fileName))
+        {
+            mFonts.emplace(fileName, font);
+        }
+        else
+        {
+            font->Unload();
+            delete font;
+            font = nullptr;
+        }
+        return font;
+    }
+}
 

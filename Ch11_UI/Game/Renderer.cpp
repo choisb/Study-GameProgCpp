@@ -7,6 +7,8 @@
 #include "SpriteComponent.h"
 #include <GL/glew.h>
 #include "MeshComponent.h"
+#include "UIScreen.h"
+#include "Game.h"
 
 Renderer::Renderer(Game* game)
     :mGame(game)
@@ -50,7 +52,7 @@ bool Renderer::Initialize(float screenWidth, float screenHeight)
 
 
     mWindow = SDL_CreateWindow(
-        "Game Programming in C++ (Chapter 10)", // 윈도우 제목
+        "Game Programming in C++ (Chapter 11)", // 윈도우 제목
         100,                            // 윈도우의 좌측 상단 x좌표
         100,                            // 윈도우의 좌측 상단 y좌표
         static_cast<int>(mScreenWidth), // 윈도우의 너비
@@ -121,8 +123,8 @@ void Renderer::UnloadData()
 
 void Renderer::Draw()
 {
-    // 색상을 회색으로 설정
-    glClearColor(0.86f, 0.86f, 0.86f, 1.0f);
+    // 색상을 검은색으로 설정
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     // 색상 버퍼 초기화
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -166,6 +168,12 @@ void Renderer::Draw()
             sprite->Draw(mSpriteShader);
         }
 	}
+
+    // 모든 UI를 그린다.
+    for (auto ui : mGame->GetUIStack())
+    {
+        ui->Draw(mSpriteShader);
+    }
 
 	// Swap the buffers
 	SDL_GL_SwapWindow(mWindow);

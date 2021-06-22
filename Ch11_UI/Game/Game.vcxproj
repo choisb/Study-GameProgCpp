@@ -32,11 +32,13 @@
     <ClCompile Include="FPSActor.cpp" />
     <ClCompile Include="FPSCamera.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="HUD.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshComponent.cpp" />
     <ClCompile Include="MoveComponent.cpp" />
+    <ClCompile Include="PauseMenu.cpp" />
     <ClCompile Include="PhysWorld.cpp" />
     <ClCompile Include="PlaneActor.cpp" />
     <ClCompile Include="Random.cpp" />
@@ -46,6 +48,7 @@
     <ClCompile Include="SpriteComponent.cpp" />
     <ClCompile Include="TargetActor.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="UIScreen.cpp" />
     <ClCompile Include="VertexArray.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -62,10 +65,12 @@
     <ClInclude Include="FPSActor.h" />
     <ClInclude Include="FPSCamera.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="HUD.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshComponent.h" />
     <ClInclude Include="MoveComponent.h" />
+    <ClInclude Include="PauseMenu.h" />
     <ClInclude Include="PhysWorld.h" />
     <ClInclude Include="PlaneActor.h" />
     <ClInclude Include="Random.h" />
@@ -75,6 +80,7 @@
     <ClInclude Include="SpriteComponent.h" />
     <ClInclude Include="TargetActor.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="UIScreen.h" />
     <ClInclude Include="VertexArray.h" />
   </ItemGroup>
   <ItemGroup>

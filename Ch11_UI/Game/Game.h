@@ -21,6 +21,22 @@ public:
     class Renderer* GetRenderer() { return mRenderer; }
     class AudioSystem* GetAudioSystem() { return mAudioSystem; }
     class PhysWorld* GetPhysWorld() { return mPhysWorld; }
+    class HUD* GetHUD() { return mHUD; }
+    // UI stack 관리 함수
+    const std::vector<class UIScreen*>& GetUIStack() { return mUIStack; }
+    void PushUI(class UIScreen* screen);
+
+    enum GameState
+    {
+        EGameplay,
+        EPaused,
+        EQuit
+    };
+
+    GameState GetState() const { return mGameState; }
+    void SetState(GameState state) { mGameState = state; }
+
+    class Font* GetFont(const std::string& fileName);
 
     // Game-specific
     void AddPlane(class PlaneActor* plane);
@@ -36,9 +52,12 @@ private:
     void LoadData();
     void UnloadData();
 
-
     // 활성화된 액터
     std::vector<class Actor*> mActors;
+
+    // UI 관련
+    std::vector<class UIScreen*> mUIStack;
+    std::unordered_map<std::string, class Font*> mFonts;
     // 대기 중인 액터, mActors를 반복하는 동안 새 액터를 생성하는 경우를 위해서 대기 액터를 위한 벡터 사용.
     std::vector<class Actor*> mPendingActors;
 
@@ -46,14 +65,14 @@ private:
     class Renderer* mRenderer;
     class AudioSystem* mAudioSystem;
     class PhysWorld* mPhysWorld;
+    class HUD* mHUD;
 
     Uint32 mTicksCount;
-    bool mIsRunning;        // 게임이 계속 실행돼야 하는지를 판단.
+    GameState mGameState;
     bool mUpdatingActors;
 
     // Game-specific code
     std::vector<class PlaneActor*> mPlanes;
-    class SpriteComponent* mCrosshair;
     class FPSActor* mFPSActor;
 
     SoundEvent mMusicEvent;
