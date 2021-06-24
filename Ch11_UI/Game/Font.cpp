@@ -42,7 +42,7 @@ bool Font::Load(const std::string& fileName)
 
     return true;
 }
-Texture* Font::RenderText(const std::string& text,
+Texture* Font::RenderText(const std::string& textKey,
     const Vector3& color /*= Color::White*/,
     int pointSize /*= 30*/) 
 {
@@ -58,8 +58,9 @@ Texture* Font::RenderText(const std::string& text,
     if (iter != mFontData.end())
     {
         TTF_Font* font = iter->second;
+        const std::string& actualText = mGame->GetText(textKey);
         // 텍스트를 그린다(알파값으로 블렌딩됨)
-        SDL_Surface* surf = TTF_RenderText_Blended(font, text.c_str(), sdlColor);
+        SDL_Surface* surf = TTF_RenderUTF8_Blended(font, actualText.c_str(), sdlColor);
         if (surf != nullptr)
         {
             // SDL surface 객체를 texture 객체로 변환

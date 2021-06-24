@@ -1,4 +1,5 @@
 #include "TargetActor.h"
+#include "TargetComponent.h"
 #include "Game.h"
 #include "Renderer.h"
 #include "MeshComponent.h"
@@ -16,4 +17,6 @@ TargetActor::TargetActor(Game* game)
     // Add collision box
     BoxComponent* bc = new BoxComponent(this);
     bc->SetObjectBox(mesh->GetBox());
+
+    new TargetComponent(this);
 }

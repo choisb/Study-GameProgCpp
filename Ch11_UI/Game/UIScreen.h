@@ -84,4 +84,5 @@ protected:
     UIState mState;
     // 버튼들의 벡터
     std::vector<Button*> mButtons;
+
 };

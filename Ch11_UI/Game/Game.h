@@ -26,6 +26,8 @@ public:
     const std::vector<class UIScreen*>& GetUIStack() { return mUIStack; }
     void PushUI(class UIScreen* screen);
 
+    class FPSActor* GetPlayer() { return mFPSActor; }
+
     enum GameState
     {
         EGameplay,
@@ -37,6 +39,9 @@ public:
     void SetState(GameState state) { mGameState = state; }
 
     class Font* GetFont(const std::string& fileName);
+    
+    void LoadText(const std::string& fileName);
+    const std::string& GetText(const std::string& key);
 
     // Game-specific
     void AddPlane(class PlaneActor* plane);
@@ -58,6 +63,9 @@ private:
     // UI 관련
     std::vector<class UIScreen*> mUIStack;
     std::unordered_map<std::string, class Font*> mFonts;
+
+    // 현지화를 위한 Map
+    std::unordered_map<std::string, std::string> mText;
     // 대기 중인 액터, mActors를 반복하는 동안 새 액터를 생성하는 경우를 위해서 대기 액터를 위한 벡터 사용.
     std::vector<class Actor*> mPendingActors;
 

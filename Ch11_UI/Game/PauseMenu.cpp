@@ -1,5 +1,6 @@
 #include "PauseMenu.h"
 #include "Game.h"
+#include "DialogBox.h"
 #include <SDL/SDL.h>
 
 PauseMenu::PauseMenu(Game* game)
@@ -7,12 +8,15 @@ PauseMenu::PauseMenu(Game* game)
 {
     mGame->SetState(Game::EPaused);
     SetRelativeMouseMode(false);
-    SetTitle("PAUSED");
+    SetTitle("PauseTitle");
     AddButton("ResumeButton", [this]() {
-        this->Close();
+        Close();
     });
-    AddButton("Quit", [this]() {
-        mGame->SetState(Game::EQuit);
+    AddButton("QuitButton", [this]() {
+        new DialogBox(mGame, "QuitText",
+            [this]() {
+            mGame->SetState(Game::EQuit);
+        });
     });
 }
 PauseMenu::~PauseMenu()

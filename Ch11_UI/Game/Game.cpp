@@ -16,6 +16,9 @@
 #include "HUD.h"
 #include "PauseMenu.h"
 #include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <rapidjson/document.h>
 
 Game::Game()
     :mRenderer(nullptr)
@@ -178,7 +181,24 @@ void Game::HandleKeyPress(int key)
         mAudioSystem->SetBusVolume("bus:/", volume);
         break;
     }
-
+    case '1':
+    {
+        // Load English text
+        LoadText("../Assets/English.gptext");
+        break;
+    }
+    case '2':
+    {
+        // Load Russian text
+        LoadText("../Assets/Russian.gptext");
+        break;
+    }
+    case '3':
+    {
+        // Load Russian text
+        LoadText("../Assets/Korean.gptext");
+        break;
+    }
     case SDL_BUTTON_LEFT:
     {
         mFPSActor->Shoot();
@@ -276,6 +296,9 @@ void Game::GenerateOutput()
 
 void Game::LoadData()
 {
+    // Load English text
+    LoadText("../Assets/English.gptext");
+
     // Create actors
     Actor* a = nullptr;
     Quaternion q;
@@ -349,6 +372,12 @@ void Game::LoadData()
     a->SetPosition(Vector3(1450.0f, -500.0f, 200.0f));
     a = new TargetActor(this);
     a->SetPosition(Vector3(1450.0f, 500.0f, 200.0f));
+    a = new TargetActor(this);
+    a->SetPosition(Vector3(0.0f, -1450.0f, 200.0f));
+    a->SetRotation(Quaternion(Vector3::UnitZ, Math::PiOver2));
+    a = new TargetActor(this);
+    a->SetPosition(Vector3(0.0f, 1450.0f, 200.0f));
+    a->SetRotation(Quaternion(Vector3::UnitZ, -Math::PiOver2));
 }
 
 void Game::UnloadData()
@@ -451,4 +480,53 @@ Font* Game::GetFont(const std::string& fileName)
         return font;
     }
 }
+void Game::LoadText(const std::string& fileName)
+{
+    // 기존에 저장되어있던 내용을 정리한다.
+    mText.clear();
+    // 파일을 연다
+    std::ifstream file(fileName);
+    if (!file.is_open())
+    {
+        SDL_Log("Text file %s not found", fileName.c_str());
+        return;
+    }
+    // 파일의 내용을 모두 string stream로 읽어온다.
+    std::stringstream fileStream;
+    fileStream << file.rdbuf();
+    std::string contents = fileStream.str();
+    // 열린 파일은 rapidJSON으로 읽어온다.
+    rapidjson::StringStream jsonStr(contents.c_str());
+    rapidjson::Document doc;
+    doc.ParseStream(jsonStr);
+    if (!doc.IsObject())
+    {
+        SDL_Log("Text file %s is not valid JSON", fileName.c_str());
+        return;
+    }
+    // 텍스트 맵을 파싱한다.
+    const rapidjson::Value& actions = doc["TextMap"];
+    for (rapidjson::Value::ConstMemberIterator itr = actions.MemberBegin();
+        itr != actions.MemberEnd(); ++itr)
+    {
+        if (itr->name.IsString() && itr->value.IsString())
+        {
+            mText.emplace(itr->name.GetString(), itr->value.GetString());
+        }
+    }
+}
 
+const std::string& Game::GetText(const std::string& key)
+{
+    static std::string errorMsg("**KEY NOT FOUND**");
+    // Find this text in the map, if it exists
+    auto iter = mText.find(key);
+    if (iter != mText.end())
+    {
+        return iter->second;
+    }
+    else
+    {
+        return errorMsg;
+    }
+}

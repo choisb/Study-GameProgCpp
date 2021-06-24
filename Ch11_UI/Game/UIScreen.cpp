@@ -58,13 +58,14 @@ void Button::OnClick()
 UIScreen::UIScreen(Game* game)
     :mGame(game)
     ,mTitle(nullptr)
+    ,mBackground(nullptr)
     ,mTitlePos(0.0f, 300.0f)
     ,mNextButtonPos(0.0f, 200.0f)
     ,mBGPos(0.0f, 250.0f)
     ,mState(EActive)
 {
     mGame->PushUI(this);
-    mFont = mGame->GetFont("../Assets/Carlito-Regular.ttf");
+    mFont = mGame->GetFont("../Assets/BMHANNA_11yrs_ttf.ttf");
     mButtonOn = mGame->GetRenderer()->GetTexture("../Assets/ButtonYellow.png");
     mButtonOff = mGame->GetRenderer()->GetTexture("../Assets/ButtonBlue.png");
 }
@@ -83,10 +84,18 @@ void UIScreen::Update(float deltaTime)
 }
 void UIScreen::Draw(Shader* shader)
 {
+    // 배경을 그린다.
+    if (mBackground)
+    {
+        DrawTexture(shader, mBackground, mBGPos);
+    }
+
+    // UI의 타이틀을 그린다.
     if (mTitle)
     {
         DrawTexture(shader, mTitle, mTitlePos);
     }
+
     // 버튼들을 그린다.
     for (auto b : mButtons)
     {
