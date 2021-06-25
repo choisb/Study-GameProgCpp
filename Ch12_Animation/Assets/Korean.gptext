@@ -1,0 +1,10 @@
+{
+	"TextMap":{
+		"PauseTitle": "일시정지",
+		"ResumeButton": "계속",
+		"QuitButton": "종료",
+		"QuitText": "게임을 종료 하시겠습니까?",
+		"OKButton": "종료",
+		"CancelButton": "취소"
+	}
+}
