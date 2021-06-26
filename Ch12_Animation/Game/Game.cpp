@@ -8,7 +8,7 @@
 #include "PlaneActor.h"
 #include "AudioSystem.h"
 #include "AudioComponent.h"
-#include "FPSActor.h"
+#include "FollowActor.h"
 #include "PhysWorld.h"
 #include "TargetActor.h"
 #include "Font.h"
@@ -199,11 +199,6 @@ void Game::HandleKeyPress(int key)
         LoadText("../Assets/Korean.gptext");
         break;
     }
-    case SDL_BUTTON_LEFT:
-    {
-        mFPSActor->Shoot();
-        break;
-    }
     default:
         break;
     }
@@ -360,8 +355,8 @@ void Game::LoadData()
     // Make an initial call to get relative to clear out
     SDL_GetRelativeMouseState(nullptr, nullptr);
 
-    // Different camera actors
-    mFPSActor = new FPSActor(this);
+    // Create Player
+    mFollowActor = new FollowActor(this);
 
     // Create target actors
     a = new TargetActor(this);

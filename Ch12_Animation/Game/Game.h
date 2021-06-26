@@ -26,7 +26,7 @@ public:
     const std::vector<class UIScreen*>& GetUIStack() { return mUIStack; }
     void PushUI(class UIScreen* screen);
 
-    class FPSActor* GetPlayer() { return mFPSActor; }
+    class FollowActor* GetPlayer() { return mFollowActor; }
 
     enum GameState
     {
@@ -81,7 +81,7 @@ private:
 
     // Game-specific code
     std::vector<class PlaneActor*> mPlanes;
-    class FPSActor* mFPSActor;
+    class FollowActor* mFollowActor;
 
     SoundEvent mMusicEvent;
 };

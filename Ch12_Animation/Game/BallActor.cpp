@@ -11,7 +11,7 @@ BallActor::BallActor(Game* game)
     , mLifeSpan(2.0f)
 {
     //SetScale(10.0f);
-    MeshComponent* mc = new MeshComponent(this);
+    MeshComponent* mc = new MeshComponent(this, false);
     Mesh* mesh = GetGame()->GetRenderer()->GetMesh("../Assets/Sphere.gpmesh");
     mc->SetMesh(mesh);
     mMyMove = new BallMove(this);

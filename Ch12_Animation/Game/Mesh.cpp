@@ -8,6 +8,15 @@
 #include "Math.h"
 #include "Renderer.h"
 
+namespace
+{
+    union Vertex
+    {
+        float f;
+        uint8_t b[4];
+    };
+}
+
 Mesh::Mesh()
     :mBox(Vector3::Infinity, Vector3::NegInfinity)
     , mVertexArray(nullptr)
@@ -44,7 +53,7 @@ bool Mesh::Load(const std::string & fileName, Renderer* renderer)
 
     int ver = doc["version"].GetInt();
 
-    // 버전 확인
+    // Check the version
     if (ver != 1)
     {
         SDL_Log("Mesh %s not version 1", fileName.c_str());
@@ -53,9 +62,17 @@ bool Mesh::Load(const std::string & fileName, Renderer* renderer)
 
     mShaderName = doc["shader"].GetString();
 
-    // Skip the vertex format / shader for now
-    // (This is changed in a later chapter's code)
+    // Set the vertex layout/size based on the format in the file
+    VertexArray::Layout layout = VertexArray::PosNormTex;
     size_t vertSize = 8;
+
+    std::string vertexFormat = doc["vertexformat"].GetString();
+    if (vertexFormat == "PosNormSkinTex")
+    {
+        layout = VertexArray::PosNormSkinTex;
+        // This is the number of "Vertex" unions, which is 8 + 2 (for skinning)s
+        vertSize = 10;
+    }
 
     // Load textures
     const rapidjson::Value& textures = doc["textures"];
@@ -79,7 +96,7 @@ bool Mesh::Load(const std::string & fileName, Renderer* renderer)
             if (t == nullptr)
             {
                 // If it's still null, just use the default texture
-                t = renderer->GetTexture("../Assets/Default.png");
+                t = renderer->GetTexture("Assets/Default.png");
             }
         }
         mTextures.emplace_back(t);
@@ -93,14 +110,14 @@ bool Mesh::Load(const std::string & fileName, Renderer* renderer)
         return false;
     }
 
-    std::vector<float> vertices;
+    std::vector<Vertex> vertices;
     vertices.reserve(vertsJson.Size() * vertSize);
     mRadius = 0.0f;
     for (rapidjson::SizeType i = 0; i < vertsJson.Size(); i++)
     {
         // For now, just assume we have 8 elements
         const rapidjson::Value& vert = vertsJson[i];
-        if (!vert.IsArray() || vert.Size() != 8)
+        if (!vert.IsArray())
         {
             SDL_Log("Unexpected vertex format for %s", fileName.c_str());
             return false;
@@ -110,10 +127,42 @@ bool Mesh::Load(const std::string & fileName, Renderer* renderer)
         mRadius = Math::Max(mRadius, pos.LengthSq());
         mBox.UpdateMinMax(pos);
 
-        // Add the floats
-        for (rapidjson::SizeType i = 0; i < vert.Size(); i++)
+        if (layout == VertexArray::PosNormTex)
         {
-            vertices.emplace_back(static_cast<float>(vert[i].GetDouble()));
+            Vertex v;
+            // Add the floats
+            for (rapidjson::SizeType j = 0; j < vert.Size(); j++)
+            {
+                v.f = static_cast<float>(vert[j].GetDouble());
+                vertices.emplace_back(v);
+            }
+        }
+        else
+        {
+            Vertex v;
+            // Add pos/normal
+            for (rapidjson::SizeType j = 0; j < 6; j++)
+            {
+                v.f = static_cast<float>(vert[j].GetDouble());
+                vertices.emplace_back(v);
+            }
+
+            // Add skin information
+            for (rapidjson::SizeType j = 6; j < 14; j += 4)
+            {
+                v.b[0] = vert[j].GetUint();
+                v.b[1] = vert[j + 1].GetUint();
+                v.b[2] = vert[j + 2].GetUint();
+                v.b[3] = vert[j + 3].GetUint();
+                vertices.emplace_back(v);
+            }
+
+            // Add tex coords
+            for (rapidjson::SizeType j = 14; j < vert.Size(); j++)
+            {
+                v.f = vert[j].GetDouble();
+                vertices.emplace_back(v);
+            }
         }
     }
 
@@ -146,9 +195,10 @@ bool Mesh::Load(const std::string & fileName, Renderer* renderer)
 
     // Now create a vertex array
     mVertexArray = new VertexArray(vertices.data(), static_cast<unsigned>(vertices.size()) / vertSize,
-        indices.data(), static_cast<unsigned>(indices.size()));
+        layout, indices.data(), static_cast<unsigned>(indices.size()));
     return true;
 }
+
 
 void Mesh::Unload()
 {

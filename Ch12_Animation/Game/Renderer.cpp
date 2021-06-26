@@ -9,11 +9,13 @@
 #include "MeshComponent.h"
 #include "UIScreen.h"
 #include "Game.h"
+#include "SkeletalMeshComponent.h"
 
 Renderer::Renderer(Game* game)
     :mGame(game)
     ,mSpriteShader(nullptr)
     ,mMeshShader(nullptr)
+    ,mSkinnedShader(nullptr)
 {
 
 }
@@ -149,6 +151,17 @@ void Renderer::Draw()
         }
     }
 
+    // 스키닝 셰이더를 활용한 스키닝 메시 그리기
+    mSkinnedShader->SetActive();
+    mSkinnedShader->SetMatrixUniform("uViewProj", mView * mProjection);
+    SetLightUniforms(mSkinnedShader);
+    for (auto sk : mSkeletalMeshes)
+    {
+        if (sk->GetVisible())
+        {
+            sk->Draw(mSkinnedShader);
+        }
+    }
 	// 3D 메시 모두 그리고 UI등 2D 스프라이트 그리기 시작
 	// DEPTH 버퍼 비활성화
 	glDisable(GL_DEPTH_TEST);
@@ -212,12 +225,30 @@ void Renderer::RemoveSprite(SpriteComponent* sprite)
 }
 void Renderer::AddMeshComp(MeshComponent* mesh)
 {
-    mMeshComps.emplace_back(mesh);
+    if (mesh->GetIsSkeletal())
+    {
+        SkeletalMeshComponent* sk = static_cast<SkeletalMeshComponent*>(mesh);
+        mSkeletalMeshes.emplace_back(sk);
+    }
+    else
+    {
+        mMeshComps.emplace_back(mesh);
+    }
 }
+
 void Renderer::RemoveMeshComp(MeshComponent* mesh)
 {
-    auto iter = std::find(mMeshComps.begin(), mMeshComps.end(), mesh);
-    mMeshComps.erase(iter);
+    if (mesh->GetIsSkeletal())
+    {
+        SkeletalMeshComponent* sk = static_cast<SkeletalMeshComponent*>(mesh);
+        auto iter = std::find(mSkeletalMeshes.begin(), mSkeletalMeshes.end(), sk);
+        mSkeletalMeshes.erase(iter);
+    }
+    else
+    {
+        auto iter = std::find(mMeshComps.begin(), mMeshComps.end(), mesh);
+        mMeshComps.erase(iter);
+    }
 }
 
 Texture* Renderer::GetTexture(const std::string& fileName)
@@ -307,6 +338,17 @@ bool Renderer::LoadShaders()
     );
     mMeshShader->SetMatrixUniform("uViewProj", mView * mProjection);
 
+    // 스키닝 셰이더 생성
+    mSkinnedShader = new Shader();
+    if (!mSkinnedShader->Load("Shaders/Skinned.vert", "Shaders/Phong.frag"))
+    {
+        return false;
+    }
+
+    mSkinnedShader->SetActive();
+    // view projection 행렬은 일반 메시 셰이더와 동일
+    mSkinnedShader->SetMatrixUniform("uViewProj", mView * mProjection);
+
     return true;
 }
 
@@ -326,7 +368,7 @@ void Renderer::CreateSpriteVerts()
     };
     // 스프라이트를 그리기 위한 4각형 스프라이트 VertexArray 생성과정
     // 앞으로 모든 sprite들은 이 멤버변수를 사용한다.
-    mSpriteVerts = new VertexArray(vertices, 4, indices, 6);
+    mSpriteVerts = new VertexArray(vertices, 4, VertexArray::PosNormTex, indices, 6);
 }
 void Renderer::SetLightUniforms(Shader* shader)
 {

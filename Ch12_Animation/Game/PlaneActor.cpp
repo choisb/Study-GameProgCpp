@@ -9,7 +9,7 @@ PlaneActor::PlaneActor(Game* game)
     :Actor(game)
 {
     SetScale(10.0f);
-    MeshComponent* mc = new MeshComponent(this);
+    MeshComponent* mc = new MeshComponent(this, false);
     Mesh* mesh = GetGame()->GetRenderer()->GetMesh("../Assets/Plane.gpmesh");
     mc->SetMesh(mesh);
     // Add collision box

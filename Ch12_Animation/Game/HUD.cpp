@@ -4,7 +4,7 @@
 #include "Game.h"
 #include "Renderer.h"
 #include "PhysWorld.h"
-#include "FPSActor.h"
+#include "FollowActor.h"
 #include "TargetComponent.h"
 #include <algorithm>
 

@@ -2,9 +2,14 @@
 class VertexArray
 {
 public:
+    enum Layout
+    {
+        PosNormTex,
+        PosNormSkinTex
+    };
     // 생성자는 버텍스와 인덱스 버퍼 포인터를 인자로 받아서 그 데이터를 OpenGL로 전달한다.
     // 해당 데이터는 그래픽 하드웨어상에 로드된다.
-    VertexArray(const float* verts, unsigned int numVerts,
+    VertexArray(const void* verts, unsigned int numVerts, Layout layout,
         const unsigned int* indices, unsigned int numIndices);
     ~VertexArray();
 

@@ -61,6 +61,7 @@ private:
 
     // All mesh components drawn
     std::vector<class MeshComponent*> mMeshComps;
+    std::vector<class SkeletalMeshComponent*> mSkeletalMeshes;
 
     // Game
     class Game* mGame;
@@ -72,6 +73,7 @@ private:
 
     // Mesh shader
     class Shader* mMeshShader;
+    class Shader* mSkinnedShader;
 
     // View/projection for 3D shaders
     Matrix4 mView;

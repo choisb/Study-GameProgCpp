@@ -25,7 +25,7 @@ FPSActor::FPSActor(Game* game)
 
     mFPSModel = new Actor(game);
     mFPSModel->SetScale(0.75f);
-    mMeshComp = new MeshComponent(mFPSModel);
+    mMeshComp = new MeshComponent(mFPSModel, false);
     mMeshComp->SetMesh(game->GetRenderer()->GetMesh("../Assets/Rifle.gpmesh"));
 
     // Add a box component
