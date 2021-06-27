@@ -123,7 +123,7 @@ bool Mesh::Load(const std::string & fileName, Renderer* renderer)
             return false;
         }
 
-        Vector3 pos(vert[0].GetDouble(), vert[1].GetDouble(), vert[2].GetDouble());
+        Vector3 pos(vert[0].GetFloat(), vert[1].GetFloat(), vert[2].GetFloat());
         mRadius = Math::Max(mRadius, pos.LengthSq());
         mBox.UpdateMinMax(pos);
 
@@ -160,7 +160,7 @@ bool Mesh::Load(const std::string & fileName, Renderer* renderer)
             // Add tex coords
             for (rapidjson::SizeType j = 14; j < vert.Size(); j++)
             {
-                v.f = vert[j].GetDouble();
+                v.f = vert[j].GetFloat();
                 vertices.emplace_back(v);
             }
         }

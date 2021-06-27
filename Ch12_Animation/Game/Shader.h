@@ -19,6 +19,12 @@ public:
     // - matrix: 입력하고자 하는 값
     void SetMatrixUniform(const char* name, const Matrix4& matrix);
 
+    // 셰이더의 Matrix (배열) uniform 설정 함수
+    // - name: 셰이더 파일 내에 존재하는 uniform 변수 이름
+    // - matrices: 입력하고자 하는 배열의 시작 주소값
+    // - count: 배열의 길이
+    void SetMatrixUniform(const char* name, const Matrix4* matrices, unsigned count);
+
     // 셰이더의 vec3 uniform 설정 함수
     // - name: 셰이더 파일 내에 존재하는 uniform 변수 이름
     // - Vector3: 입력하고자 하는 Vector3값

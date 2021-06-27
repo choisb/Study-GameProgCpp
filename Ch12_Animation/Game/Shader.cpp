@@ -52,6 +52,13 @@ void Shader::SetMatrixUniform(const char* name, const Matrix4& matrix)
         matrix.GetAsFloatPtr() // 행렬 데이터에 대한 포인터
     );
 }
+void Shader::SetMatrixUniform(const char* name, const Matrix4* matrices, unsigned count)
+{
+    GLuint loc = glGetUniformLocation(mShaderProgram, name);
+    // Send the matrix data to the uniform
+    glUniformMatrix4fv(loc, count, GL_TRUE, matrices->GetAsFloatPtr());
+}
+
 
 void Shader::SetVectorUniform(const char* name, const Vector3& vector)
 {

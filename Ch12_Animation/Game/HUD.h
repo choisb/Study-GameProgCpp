@@ -20,8 +20,7 @@ protected:
     void UpdateRadar(float deltaTime);
 
     // HUD의 텍스처들
-    class Texture* mCrosshair;
-    class Texture* mCrosshairEnemy;
+
     class Texture* mRadar;
     class Texture* mHealthBar;
     class Texture* mBlipTex;

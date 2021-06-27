@@ -43,6 +43,10 @@ public:
     void LoadText(const std::string& fileName);
     const std::string& GetText(const std::string& key);
 
+    class Skeleton* GetSkeleton(const std::string& fileName);
+
+    class Animation* GetAnimation(const std::string& fileName);
+
     // Game-specific
     void AddPlane(class PlaneActor* plane);
     void RemovePlane(class PlaneActor* plane);
@@ -59,6 +63,8 @@ private:
 
     // 활성화된 액터
     std::vector<class Actor*> mActors;
+    // 대기 중인 액터, mActors를 반복하는 동안 새 액터를 생성하는 경우를 위해서 대기 액터를 위한 벡터 사용.
+    std::vector<class Actor*> mPendingActors;
 
     // UI 관련
     std::vector<class UIScreen*> mUIStack;
@@ -66,8 +72,11 @@ private:
 
     // 현지화를 위한 Map
     std::unordered_map<std::string, std::string> mText;
-    // 대기 중인 액터, mActors를 반복하는 동안 새 액터를 생성하는 경우를 위해서 대기 액터를 위한 벡터 사용.
-    std::vector<class Actor*> mPendingActors;
+
+    // 로드된 skeletons을 위한 Map
+    std::unordered_map<std::string, class Skeleton*> mSkeletons;
+    // 로드된 animation을 위한 Map
+    std::unordered_map<std::string, class Animation*> mAnims;
 
     // 출력과 관련있는 기능들이 모여있는 Renderer
     class Renderer* mRenderer;

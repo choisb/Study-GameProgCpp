@@ -16,8 +16,6 @@ HUD::HUD(Game* game)
 {
     Renderer* r = mGame->GetRenderer();
     mRadar = r->GetTexture("../Assets/Radar.png");
-    mCrosshair = r->GetTexture("../Assets/Crosshair.png");
-    mCrosshairEnemy = r->GetTexture("../Assets/CrosshairRed.png");
     mBlipTex = r->GetTexture("../Assets/Blip.png");
     mRadarArrow = r->GetTexture("../Assets/RadarArrow.png");
     mHealthBar = r->GetTexture("../Assets/HealthBar.png");
@@ -37,9 +35,6 @@ void HUD::Update(float deltaTime)
 }
 void HUD::Draw(Shader* shader)
 {
-    // Crosshair
-    Texture* cross = mTargetEnemy ? mCrosshairEnemy : mCrosshair;
-    DrawTexture(shader, cross, Vector2::Zero, 2.0f);
 
     // Radar
     const Vector2 cRadarPos(-390.0f, 275.0f);

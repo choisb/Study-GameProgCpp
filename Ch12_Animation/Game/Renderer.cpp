@@ -54,7 +54,7 @@ bool Renderer::Initialize(float screenWidth, float screenHeight)
 
 
     mWindow = SDL_CreateWindow(
-        "Game Programming in C++ (Chapter 11)", // 윈도우 제목
+        "Game Programming in C++ (Chapter 12)", // 윈도우 제목
         100,                            // 윈도우의 좌측 상단 x좌표
         100,                            // 윈도우의 좌측 상단 y좌표
         static_cast<int>(mScreenWidth), // 윈도우의 너비
