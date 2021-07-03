@@ -47,7 +47,7 @@ bool Texture::Load(const std::string& fileName)
     // 원본 이미지 데이터를 텍스처 오브젝트에 복사
     glTexImage2D(
         GL_TEXTURE_2D,  // 텍스처 타깃
-        0,              // LOD (지금은 0으로 가정)
+        0,              // LOD (mipmap 수동 설정시 mipmap 텍스처의 인덱스)
         format,         // OpenGL이 사용해야 되는 색상 포맷
         mWidth,         // 텍스처의 너비
         mHeight,        // 텍스처의 높이
@@ -60,10 +60,27 @@ bool Texture::Load(const std::string& fileName)
     // OpenGL에 이미지 데이터를 복사한 후에는 SOIL에 메모리상의 이미지 데이터 해제를 알린다.
     SOIL_free_image_data(image);
 
-    // 이중 선형 필터링을 활성화시킨다.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    // Mipmap 자동 생성
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // 이미지 축소시 삼중 선형 필터링 사용
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    // 이미지 축소시 최근접 이웃 맵매핑 사용
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+ 
+    // 이미지 확대시에는 밉맵이 도움되지 않음. 그대로 이중 선형 필터링 사용
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    // 그래픽 하드웨어가 이방성 필터링 지원하는지 테스트 후 사용
+    if (GLEW_EXT_texture_filter_anisotropic)
+    {
+        // 이방성 최대값을 얻는다.
+        GLfloat largest;
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &largest);
+        // 이방성 필터링을 최대값으로 활성화한다.
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largest);
+    }
     return true;
 }
 
