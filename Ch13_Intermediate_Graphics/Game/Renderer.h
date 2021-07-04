@@ -46,10 +46,19 @@ public:
     float GetScreenWidth() const { return mScreenWidth; }
     float GetScreenHeight() const { return mScreenHeight; }
 
+    void SetMirrorView(const Matrix4& view) { mMirrorView = view; }
+    class Texture* GetMirrorTexture() { return mMirrorTexture; }
+
 private:
+
+    void Draw3DScene(unsigned int framebuffer, 
+        const Matrix4& view, const Matrix4& proj, float viewPortScale = 1.0f);
+
+    bool CreateMirrorTarget();
+
     bool LoadShaders();
     void CreateSpriteVerts();
-    void SetLightUniforms(class Shader* shader);
+    void SetLightUniforms(class Shader* shader, const Matrix4& view);
 
     // Map of textures loaded
     std::unordered_map<std::string, class Texture*> mTextures;
@@ -90,4 +99,10 @@ private:
     SDL_Window* mWindow;
     // OpenGL context
     SDL_GLContext mContext;
+
+    // 거울(백미러) 프레임 버퍼 개체
+    unsigned int mMirrorBuffer;
+    // 거울 텍스처
+    class Texture* mMirrorTexture;
+    Matrix4 mMirrorView;
 };

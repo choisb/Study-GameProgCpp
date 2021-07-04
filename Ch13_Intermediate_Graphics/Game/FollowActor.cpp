@@ -8,6 +8,7 @@
 #include "SkeletalMeshComponent.h"
 #include "Skeleton.h"
 #include "Animation.h"
+#include "MirrorCamera.h"
 
 FollowActor::FollowActor(Game* game)
     :Actor(game)
@@ -21,6 +22,9 @@ FollowActor::FollowActor(Game* game)
     mMoveComp = new MoveComponent(this);
     mCameraComp = new FollowCamera(this);
     mCameraComp->SnapToIdeal();
+
+    MirrorCamera* mirror = new MirrorCamera(this);
+    mirror->SnapToIdeal();
 }
 
 void FollowActor::ActorInput(const uint8_t* keys)

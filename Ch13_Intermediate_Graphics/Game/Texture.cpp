@@ -103,6 +103,20 @@ void Texture::CreateFromSurface(SDL_Surface* surface)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
+void Texture::CreateForRendering(int width, int height, unsigned int format)
+{
+    mWidth = width;
+    mHeight = height;
+    // 텍스처 아이디
+    glGenTextures(1, &mTextureID);
+    glBindTexture(GL_TEXTURE_2D, mTextureID);
+    // 이미지 너비 / 높이 설정, 초기 데이터는 null로 설정
+    glTexImage2D(GL_TEXTURE_2D, 0, format, mWidth, mHeight, 0, GL_RGB, GL_FLOAT, nullptr);
+
+    // 텍스처는 최근접 이웃 필터링만 사용
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
 void Texture::SetActive()
 {
     glBindTexture(GL_TEXTURE_2D, mTextureID);

@@ -66,7 +66,9 @@ public:
 protected:
     // 텍스처를 그리기 위한 헬퍼 함수
     void DrawTexture(class Shader* shader, class Texture* texture,
-        const Vector2& offset = Vector2::Zero, float scale = 1.0f);
+        const Vector2& offset = Vector2::Zero, 
+        float scale = 1.0f, 
+        bool flipY = false);
     void SetRelativeMouseMode(bool relative);
     class Game* mGame;
     // UI 스크린의 제목 텍스트 렌더링을 위한 정보

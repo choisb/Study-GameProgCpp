@@ -9,6 +9,9 @@ public:
     bool Load(const std::string& fileName);
     void Unload();
     void CreateFromSurface(struct SDL_Surface* surface);
+    void CreateForRendering(int width, int height, unsigned int format);
+
+    unsigned int GetTextureID() const { return mTextureID; }
 
     void SetActive();
     int GetWidth() const { return mWidth; }

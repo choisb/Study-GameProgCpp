@@ -90,15 +90,30 @@ bool Renderer::Initialize(float screenWidth, float screenHeight)
     }    // 스프라이트를 그리기 위한 사각형 생성
     CreateSpriteVerts();
 
+    if (!CreateMirrorTarget())
+    {
+        SDL_Log("Failed to create render target for mirror.");
+        return false;
+    }
+
     return true;
 }
 
 void Renderer::Shutdown()
 {
+    if (mMirrorTexture != nullptr)
+    {
+        glDeleteFramebuffers(1, &mMirrorBuffer);
+        mMirrorTexture->Unload();
+        delete mMirrorTexture;
+    }
+
     delete mSpriteVerts;
-    // OpenGL 콘텍스트 제거
     mSpriteShader->Unload();
     delete mSpriteShader;
+    mMeshShader->Unload();
+    delete mMeshShader;
+    // OpenGL 콘텍스트 제거
     SDL_GL_DeleteContext(mContext);
     // mWindow 객체 해제.
     SDL_DestroyWindow(mWindow);
@@ -125,71 +140,38 @@ void Renderer::UnloadData()
 
 void Renderer::Draw()
 {
-    // 색상을 검은색으로 설정
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    // 색상 버퍼 초기화
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // 거울 텍스처를 그린다. (뷰포트 스케일값: 0.25)
+    Draw3DScene(mMirrorBuffer, mMirrorView, mProjection, 0.25f);
+    // 이제 기본 프레임 버퍼(기본 프레임 버퍼의 ID는 0이다.)로 3D 장면을 그린다.
+    Draw3DScene(0, mView, mProjection);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	// Draw mesh components
-	// 3D mesh 컴포넌트를 그릴때는 DEPTH 버퍼를 활성화 / 블랜딩을 비활성
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-    
-	// mesh 셰이더 활성화
-	mMeshShader->SetActive();
-	// mesh 셰이더에 뷰-투영 행렬 적용
-	mMeshShader->SetMatrixUniform("uViewProj", mView * mProjection);
-    // 조명관련 셰이더 변수 설정
-    SetLightUniforms(mMeshShader);
 
-    // 모든 메시에 동일한 셰이더 적용 중.
-    for (auto mc : mMeshComps)
+    glDisable(GL_DEPTH_TEST);
+    // Enable alpha blending on the color buffer
+    glEnable(GL_BLEND);
+    glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+
+    // Set shader/vao as active
+    mSpriteShader->SetActive();
+    mSpriteVerts->SetActive();
+    for (auto sprite : mSprites)
     {
-        if (mc->GetVisible())
-        {
-            mc->Draw(mMeshShader);
-        }
-    }
-
-    // 스키닝 셰이더를 활용한 스키닝 메시 그리기
-    mSkinnedShader->SetActive();
-    mSkinnedShader->SetMatrixUniform("uViewProj", mView * mProjection);
-    SetLightUniforms(mSkinnedShader);
-    for (auto sk : mSkeletalMeshes)
-    {
-        if (sk->GetVisible())
-        {
-            sk->Draw(mSkinnedShader);
-        }
-    }
-	// 3D 메시 모두 그리고 UI등 2D 스프라이트 그리기 시작
-	// DEPTH 버퍼 비활성화
-	glDisable(GL_DEPTH_TEST);
-	// 알파값을 사용하기 위한 블렌딩 활성화
-	glEnable(GL_BLEND);
-	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
-
-	// 스프라이트 셰이더와 스프라이트 버텍스 활성화
-	mSpriteShader->SetActive();
-	mSpriteVerts->SetActive();
-    // 모든 스프라이트를 그린다.
-	for (auto sprite : mSprites)
-	{
         if (sprite->GetVisible())
         {
             sprite->Draw(mSpriteShader);
         }
-	}
+    }
 
-    // 모든 UI를 그린다.
+    // Draw any UI screens
     for (auto ui : mGame->GetUIStack())
     {
         ui->Draw(mSpriteShader);
     }
 
-	// Swap the buffers
-	SDL_GL_SwapWindow(mWindow);
+    // Swap the buffers
+    SDL_GL_SwapWindow(mWindow);
 }
 
 void Renderer::AddSprite(SpriteComponent* sprite)
@@ -279,6 +261,46 @@ Texture* Renderer::GetTexture(const std::string& fileName)
         }
     }
     return tex;
+}
+bool Renderer::CreateMirrorTarget()
+{
+    int width = static_cast<int>(mScreenWidth) / 4;
+    int height = static_cast<int>(mScreenHeight) / 4;
+
+    // 거울 텍스처를 위한 프레임 버퍼 생성
+    glGenFramebuffers(1, &mMirrorBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, mMirrorBuffer);
+
+    // 렌더링을 위해 사용할 텍스처 생성
+    mMirrorTexture = new Texture();
+    mMirrorTexture->CreateForRendering(width, height, GL_RGB);
+
+    // 깊이 버퍼 추가
+    GLuint depthBuffer;
+    glGenRenderbuffers(1, &depthBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBuffer);
+
+    // 거울 텍스처를 프레임 버퍼의 출력 타깃으로 설정
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, mMirrorTexture->GetTextureID(), 0);
+
+    // 이 프레임 버퍼가 그리는 출력 버퍼 리스트 설정
+    GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1, drawBuffers);
+
+    // 모든 설정이 제대로 됐는지 확인
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        // 문제가 발생했다면 프레임 버퍼 삭제
+        // 텍스처를 삭제하고 false 리턴
+        glDeleteFramebuffers(1, &mMirrorBuffer);
+        mMirrorTexture->Unload();
+        delete mMirrorTexture;
+        mMirrorTexture = nullptr;
+        return false;
+    }
+    return true;
 }
 
 Mesh* Renderer::GetMesh(const std::string & fileName)
@@ -370,10 +392,10 @@ void Renderer::CreateSpriteVerts()
     // 앞으로 모든 sprite들은 이 멤버변수를 사용한다.
     mSpriteVerts = new VertexArray(vertices, 4, VertexArray::PosNormTex, indices, 6);
 }
-void Renderer::SetLightUniforms(Shader* shader)
+void Renderer::SetLightUniforms(Shader* shader, const Matrix4& view)
 {
     // 카메라 위치는 뷰 행렬의 역행렬로 얻을 수 있다.
-    Matrix4 invView = mView;
+    Matrix4 invView = view;
     invView.Invert();
     // 계산된 카메라 위치를 CameraPos에 입력
     shader->SetVectorUniform("uCameraPos", invView.GetTranslation());
@@ -410,4 +432,53 @@ void Renderer::GetScreenDirection(Vector3& outStart, Vector3& outDir) const
     // Get direction vector
     outDir = end - outStart;
     outDir.Normalize();
+}
+
+void Renderer::Draw3DScene(unsigned int framebuffer,
+    const Matrix4& view, const Matrix4& proj, float viewPortScale /*= 1.0f*/)
+{
+    // 현재 프레임 버퍼를 설정
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+    // 뷰포트 스케일값으로 뷰포트 크기 설정
+    glViewport(0, 0,
+        static_cast<int>(mScreenWidth * viewPortScale),
+        static_cast<int>(mScreenHeight * viewPortScale)
+    );
+
+    // 색상 버퍼 / 깊이 버퍼 클리어
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // 메시 컴포넌트를 그린다
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+
+    // mesh 셰이더 활성화
+    mMeshShader->SetActive();
+    // mesh 셰이더에 뷰-투영 행렬 적용
+    mMeshShader->SetMatrixUniform("uViewProj", view * proj);
+    // 조명관련 셰이더 변수 설정
+    SetLightUniforms(mMeshShader, view);
+
+    // 모든 메시에 동일한 셰이더 적용 중.
+    for (auto mc : mMeshComps)
+    {
+        if (mc->GetVisible())
+        {
+            mc->Draw(mMeshShader);
+        }
+    }
+
+    // 스키닝 셰이더를 활용한 스키닝 메시 그리기
+    mSkinnedShader->SetActive();
+    mSkinnedShader->SetMatrixUniform("uViewProj", view * mProjection);
+    SetLightUniforms(mSkinnedShader, view);
+    for (auto sk : mSkeletalMeshes)
+    {
+        if (sk->GetVisible())
+        {
+            sk->Draw(mSkinnedShader);
+        }
+    }
 }
