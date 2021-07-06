@@ -128,6 +128,11 @@ public:
         , y(inY)
     {}
 
+    const float* GetAsFloatPtr() const
+    {
+        return reinterpret_cast<const float*>(&x);
+    }
+
     // Set both components in one line
     void Set(float inX, float inY)
     {

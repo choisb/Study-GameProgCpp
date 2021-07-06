@@ -49,10 +49,15 @@ public:
     void SetMirrorView(const Matrix4& view) { mMirrorView = view; }
     class Texture* GetMirrorTexture() { return mMirrorTexture; }
 
+    void AddPointLight(class PointLightComponent* light);
+    void RemovePointLight(class PointLightComponent* light);
+
 private:
 
     void Draw3DScene(unsigned int framebuffer, 
-        const Matrix4& view, const Matrix4& proj, float viewPortScale = 1.0f);
+        const Matrix4& view, const Matrix4& proj, 
+        float viewPortScale = 1.0f, bool lit = true);
+    void DrawFromGBuffer();
 
     bool CreateMirrorTarget();
 
@@ -105,4 +110,11 @@ private:
     // 거울 텍스처
     class Texture* mMirrorTexture;
     Matrix4 mMirrorView;
+
+    class GBuffer* mGBuffer;
+    // GBuffer 셰이더
+    class Shader* mGGlobalShader;
+    class Shader* mGPointLightShader;
+    std::vector<class PointLightComponent*> mPointLights;
+    class Mesh* mPointLightMesh;
 };

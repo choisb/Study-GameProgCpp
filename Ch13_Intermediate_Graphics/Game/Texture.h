@@ -13,7 +13,7 @@ public:
 
     unsigned int GetTextureID() const { return mTextureID; }
 
-    void SetActive();
+    void SetActive(int index = 0);
     int GetWidth() const { return mWidth; }
     int GetHeight() const { return mHeight; }
 private:

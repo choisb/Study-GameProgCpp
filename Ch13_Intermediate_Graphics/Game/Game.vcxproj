@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{25B7112A-16FC-4E73-9562-D12D2A307F43}</ProjectGuid>
     <RootNamespace>Game</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -149,6 +149,7 @@ xcopy "C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\studi
     <ClCompile Include="FollowCamera.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GBuffer.cpp" />
     <ClCompile Include="HUD.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Math.cpp" />
@@ -162,6 +163,7 @@ xcopy "C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\studi
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="PointLightComponent.cpp" />
     <ClCompile Include="SkeletalMeshComponent.cpp" />
     <ClCompile Include="Skeleton.cpp" />
     <ClCompile Include="SoundEvent.cpp" />
@@ -189,6 +191,7 @@ xcopy "C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\studi
     <ClInclude Include="FollowCamera.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="GBuffer.h" />
     <ClInclude Include="HUD.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="MatrixPalette.h" />
@@ -202,6 +205,7 @@ xcopy "C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\studi
     <ClInclude Include="Random.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="PointLightComponent.h" />
     <ClInclude Include="SkeletalMeshComponent.h" />
     <ClInclude Include="Skeleton.h" />
     <ClInclude Include="SoundEvent.h" />
@@ -215,6 +219,10 @@ xcopy "C:\Program Files (x86)\FMOD SoundSystem\FMOD Studio API Windows\api\studi
   <ItemGroup>
     <None Include="Shaders\BasicMesh.frag" />
     <None Include="Shaders\BasicMesh.vert" />
+    <None Include="Shaders\GBufferGlobal.frag" />
+    <None Include="Shaders\GBufferGlobal.vert" />
+    <None Include="Shaders\GBufferPointLight.frag" />
+    <None Include="Shaders\GBufferWrite.frag" />
     <None Include="Shaders\Phong.frag" />
     <None Include="Shaders\Phong.vert" />
     <None Include="Shaders\Skinned.vert" />

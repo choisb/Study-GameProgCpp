@@ -129,6 +129,12 @@
     <ClCompile Include="MirrorCamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PointLightComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h">
@@ -245,6 +251,12 @@
     <ClInclude Include="MirrorCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLightComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\BasicMesh.frag" />
@@ -254,5 +266,9 @@
     <None Include="Shaders\Skinned.vert" />
     <None Include="Shaders\Sprite.frag" />
     <None Include="Shaders\Sprite.vert" />
+    <None Include="Shaders\GBufferWrite.frag" />
+    <None Include="Shaders\GBufferGlobal.frag" />
+    <None Include="Shaders\GBufferGlobal.vert" />
+    <None Include="Shaders\GBufferPointLight.frag" />
   </ItemGroup>
 </Project>

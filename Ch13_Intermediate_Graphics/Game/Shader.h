@@ -35,6 +35,10 @@ public:
     // - float: 입력하고자 하는 Vector3값
     void SetFloatUniform(const char* name, float value);
 
+    void SetIntUniform(const char* name, int value);
+
+    void SetVector2Uniform(const char* name, const Vector2& vector);
+
 private:
     // 지정된 셰이더를 컴파일
     bool CompileShader(const std::string& fileName, 

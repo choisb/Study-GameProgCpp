@@ -10,6 +10,8 @@
 #include "UIScreen.h"
 #include "Game.h"
 #include "SkeletalMeshComponent.h"
+#include "GBuffer.h"
+#include "PointLightComponent.h"
 
 Renderer::Renderer(Game* game)
     :mGame(game)
@@ -96,6 +98,17 @@ bool Renderer::Initialize(float screenWidth, float screenHeight)
         return false;
     }
 
+    // G 버퍼 생성
+    mGBuffer = new GBuffer();
+    int width = static_cast<int>(mScreenWidth);
+    int height = static_cast<int>(mScreenHeight);
+    if (!mGBuffer->Create(width, height))
+    {
+        SDL_Log("Failed to create G-buffer.");
+        return false;
+    }
+
+    mPointLightMesh = GetMesh("../Assets/PointLight.gpmesh");
     return true;
 }
 
@@ -142,10 +155,12 @@ void Renderer::Draw()
 {
     // 거울 텍스처를 그린다. (뷰포트 스케일값: 0.25)
     Draw3DScene(mMirrorBuffer, mMirrorView, mProjection, 0.25f);
-    // 이제 기본 프레임 버퍼(기본 프레임 버퍼의 ID는 0이다.)로 3D 장면을 그린다.
-    Draw3DScene(0, mView, mProjection);
+    // G버퍼로 3D 장면을 그린다.
+    Draw3DScene(mGBuffer->GetBufferID(), mView, mProjection, 1.0f, false);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    //G버퍼에 저장된 텍스처로 부터 최종 장면을 기본 프레임버퍼에 그린다.
+    DrawFromGBuffer();
 
     glDisable(GL_DEPTH_TEST);
     // Enable alpha blending on the color buffer
@@ -335,11 +350,11 @@ bool Renderer::LoadShaders()
     }
     mSpriteShader->SetActive();
     // 화면 너비가 1024x768인 view proj 변환행렬
-    Matrix4 viewProj = Matrix4::CreateSimpleViewProj(mScreenWidth, mScreenHeight);
-    mSpriteShader->SetMatrixUniform("uViewProj", viewProj);
+    Matrix4 spriteViewProj = Matrix4::CreateSimpleViewProj(mScreenWidth, mScreenHeight);
+    mSpriteShader->SetMatrixUniform("uViewProj", spriteViewProj);
 
     mMeshShader = new Shader();
-    if (!mMeshShader->Load("Shaders/Phong.vert", "Shaders/Phong.frag"))
+    if (!mMeshShader->Load("Shaders/Phong.vert", "Shaders/GBufferWrite.frag"))
     {
         return false;
     }
@@ -362,7 +377,7 @@ bool Renderer::LoadShaders()
 
     // 스키닝 셰이더 생성
     mSkinnedShader = new Shader();
-    if (!mSkinnedShader->Load("Shaders/Skinned.vert", "Shaders/Phong.frag"))
+    if (!mSkinnedShader->Load("Shaders/Skinned.vert", "Shaders/GBufferWrite.frag"))
     {
         return false;
     }
@@ -371,6 +386,38 @@ bool Renderer::LoadShaders()
     // view projection 행렬은 일반 메시 셰이더와 동일
     mSkinnedShader->SetMatrixUniform("uViewProj", mView * mProjection);
 
+    // GBuffer 셰이더 생성
+    mGGlobalShader = new Shader();
+    if (!mGGlobalShader->Load("Shaders/GBufferGlobal.vert", "Shaders/GBufferGlobal.frag"))
+    {
+        return false;
+    }
+    // G버퍼 셰이더에 제공하도록 인덱스 값으로 각 샘플러를 연관시킴
+    mGGlobalShader->SetActive();
+    mGGlobalShader->SetIntUniform("uGDiffuse", 0);
+    mGGlobalShader->SetIntUniform("uGNormal", 1);
+    mGGlobalShader->SetIntUniform("uGWorldPos", 2);
+
+    // 뷰 투영 행렬은 하나의 스프라이트를 그리기 위한 행렬
+    mGGlobalShader->SetMatrixUniform("uViewPorj", spriteViewProj);
+    // 세계 변환은 화면에 맞게 스프라이틀 조정하고 y값을 반전 시킴
+    Matrix4 gbufferWorld = Matrix4::CreateScale(mScreenWidth, -mScreenHeight, 1.0f);
+    mGGlobalShader->SetMatrixUniform("uWorldTransform", gbufferWorld);
+
+    // 점광원 셰이더 생성
+    mGPointLightShader = new Shader();
+    if (!mGPointLightShader->Load("Shaders/BasicMesh.vert",
+        "Shaders/GBufferPointLight.frag"))
+    {
+        return false;
+    }
+    // Set sampler indices
+    mGPointLightShader->SetActive();
+    mGPointLightShader->SetIntUniform("uGDiffuse", 0);
+    mGPointLightShader->SetIntUniform("uGNormal", 1);
+    mGPointLightShader->SetIntUniform("uGWorldPos", 2);
+    mGPointLightShader->SetVector2Uniform("uScreenDimensions",
+        Vector2(mScreenWidth, mScreenHeight));
     return true;
 }
 
@@ -435,7 +482,8 @@ void Renderer::GetScreenDirection(Vector3& outStart, Vector3& outDir) const
 }
 
 void Renderer::Draw3DScene(unsigned int framebuffer,
-    const Matrix4& view, const Matrix4& proj, float viewPortScale /*= 1.0f*/)
+    const Matrix4& view, const Matrix4& proj, 
+    float viewPortScale /*= 1.0f*/, bool lit /*true*/)
 {
     // 현재 프레임 버퍼를 설정
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -459,8 +507,10 @@ void Renderer::Draw3DScene(unsigned int framebuffer,
     // mesh 셰이더에 뷰-투영 행렬 적용
     mMeshShader->SetMatrixUniform("uViewProj", view * proj);
     // 조명관련 셰이더 변수 설정
-    SetLightUniforms(mMeshShader, view);
-
+    if (lit)
+    {
+        SetLightUniforms(mMeshShader, view);
+    }
     // 모든 메시에 동일한 셰이더 적용 중.
     for (auto mc : mMeshComps)
     {
@@ -473,7 +523,10 @@ void Renderer::Draw3DScene(unsigned int framebuffer,
     // 스키닝 셰이더를 활용한 스키닝 메시 그리기
     mSkinnedShader->SetActive();
     mSkinnedShader->SetMatrixUniform("uViewProj", view * mProjection);
-    SetLightUniforms(mSkinnedShader, view);
+    if (lit)
+    {
+        SetLightUniforms(mSkinnedShader, view);
+    }
     for (auto sk : mSkeletalMeshes)
     {
         if (sk->GetVisible())
@@ -481,4 +534,62 @@ void Renderer::Draw3DScene(unsigned int framebuffer,
             sk->Draw(mSkinnedShader);
         }
     }
+}
+
+void Renderer::DrawFromGBuffer()
+{
+    // 깊이 테스트 비활성화
+    glDisable(GL_DEPTH_TEST);
+    // 전역 G 버퍼 셰이더 활성화
+    mGGlobalShader->SetActive();
+    // 스프라이트를 위한 버텍스 사각형 활성화
+    mSpriteVerts->SetActive();
+    // 샘플링하려는 G 버퍼 텍스처를 활성화
+    mGBuffer->SetTexturesActive();
+    // 조명 uniform 설정
+    SetLightUniforms(mGGlobalShader, mView);
+
+    // 사각형을 그린다
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+    // Copy depth buffer from G-buffer to default frame buffer
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, mGBuffer->GetBufferID());
+    int width = static_cast<int>(mScreenWidth);
+    int height = static_cast<int>(mScreenHeight);
+    glBlitFramebuffer(0, 0, width, height,
+        0, 0, width, height,
+        GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+    // Enable depth test, but disable writes to depth buffer
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+
+    // Set the point light shader and mesh as active
+    mGPointLightShader->SetActive();
+    mPointLightMesh->GetVertexArray()->SetActive();
+    // Set the view-projeciton matrix
+    mGPointLightShader->SetMatrixUniform("uViewProj",
+        mView * mProjection);
+    // Set the G-buffer textures for sampling
+    mGBuffer->SetTexturesActive();
+
+    // The point light color should add to existing color
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+
+    // Draw the point lights
+    for (PointLightComponent* p : mPointLights)
+    {
+        p->Draw(mGPointLightShader, mPointLightMesh);
+    }
+}
+void Renderer::AddPointLight(PointLightComponent* light)
+{
+    mPointLights.emplace_back(light);
+}
+
+void Renderer::RemovePointLight(PointLightComponent* light)
+{
+    auto iter = std::find(mPointLights.begin(), mPointLights.end(), light);
+    mPointLights.erase(iter);
 }
